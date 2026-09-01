@@ -1,0 +1,1776 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>EV-TAXIMET - Pro Minimal</title>
+
+    <meta name="theme-color" content="#121212">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Thư viện html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        html, body { height: 100vh; height: 100dvh; width: 100vw; overflow: hidden; background-color: #121212; color: #e0e0e0; display: flex; flex-direction: column; position: fixed; }
+        
+        header { background: #121212; padding: calc(env(safe-area-inset-top, 12px) + 10px) 16px 8px 16px; display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1001; flex-shrink: 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        
+        .header-center-info { display: flex; flex-direction: column; align-items: center; text-align: center; flex: 1; gap: 2px; padding: 0 8px; }
+        .app-title-main { font-size: 26px; font-weight: 900; color: #ffffff; letter-spacing: 0.5px; text-transform: uppercase; line-height: 1.1; }
+        .app-author-sub { font-size: 11px; font-weight: 600; color: #ff9800; font-style: italic; letter-spacing: 0.5px; margin-top: -1px; }
+        .header-sub-details { font-size: 14px; font-weight: 600; color: #888888; }
+        
+        .btn-header { background: transparent; border: 1px solid rgba(255,255,255,0.15); color: #ffffff; font-size: 19px; width: 44px; height: 44px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+        .btn-header:active { background: rgba(255,255,255,0.1); }
+
+        .dashboard { flex: 1; display: flex; flex-direction: column; padding: 10px 16px 12px 16px; justify-content: space-between; z-index: 1001; gap: 8px; overflow-y: auto; }
+        .dashboard-content-group { display: flex; flex-direction: column; gap: 8px; width: 100%; flex: 1; }
+
+        .rate-selector-bar { display: flex; align-items: center; gap: 8px; background: #1a1a1a; padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
+        .rate-selector-label { font-size: 13px; font-weight: 800; color: #ff9800; text-transform: uppercase; white-space: nowrap; }
+        .rate-selector-dropdown { flex: 1; background: #121212; color: #38bdf8; border: 1px solid #333333; padding: 8px; border-radius: 6px; font-weight: 800; font-size: 14px; outline: none; }
+
+        .gps-status-container { flex-shrink: 0; background: #1a1a1a; border-left: 5px solid #ff9800; border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; gap: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+        .gps-icon { font-size: 31px; flex-shrink: 0; }
+        .gps-info-box { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 2px; }
+        .gps-title { font-size: 17px; font-weight: 800; color: #ff9800; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .gps-coords-live { font-family: monospace; font-size: 14px; color: #cccccc; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .gps-lost-banner {
+            background-color: #ef4444;
+            color: #ffffff;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 800;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: 8px;
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            animation: pulseWarning 1.5s infinite;
+            flex-shrink: 0;
+        }
+
+        .manual-km-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 4px;
+            border-radius: 6px;
+            margin-top: 4px;
+        }
+
+        .manual-km-box label {
+            font-size: 11px;
+            font-weight: 800;
+            color: #fff;
+            text-transform: uppercase;
+        }
+
+        .manual-km-box input {
+            width: 70px;
+            background: #121212;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 800;
+            text-align: center;
+            outline: none;
+        }
+
+        @keyframes pulseWarning {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        .fare-hero-box { background: #181818; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 6px 20px rgba(0,0,0,0.5); width: 100%; flex: 1; min-height: 90px; }
+        .metric-label { font-size: 14px; color: #888888; text-transform: uppercase; font-weight: 800; letter-spacing: 1.5px; margin-bottom: 4px; }
+        .metric-value-huge { font-size: 57px; font-weight: 900; color: #ffffff; letter-spacing: -1px; }
+
+        .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; flex-shrink: 0; }
+        .metric-card { background: #181818; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 15px 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .metric-card-label { font-size: 13px; color: #888888; text-transform: uppercase; font-weight: 800; margin-bottom: 4px; letter-spacing: 0.4px; white-space: nowrap; }
+        .metric-card-value { font-size: 19px; font-weight: 900; color: #ffffff; }
+
+        .control-section { padding-bottom: calc(8px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+        .btn-group { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+        .btn { width: 100%; padding: 20px; border-radius: 12px; border: none; font-size: 18px; font-weight: 800; cursor: pointer; text-align: center; letter-spacing: 0.5px; text-transform: uppercase; }
+        
+        .btn-start { background: #0284c7; color: white; box-shadow: 0 4px 12px rgba(2,132,199,0.3); }
+        .btn-pause { background: #eab308; color: #000; display: none; box-shadow: 0 4px 12px rgba(234,179,8,0.3); }
+        .btn-stop { background: #d32f2f; color: white; display: none; box-shadow: 0 4px 12px rgba(211,47,47,0.3); }
+        .btn-invoice { background: #10b981; color: white; display: none; width: 100%; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); z-index: 2000; justify-content: center; align-items: flex-end; }
+        .modal-content { background: #181818; color: #f0f0f0; width: 100%; max-height: 90vh; border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 20px; overflow-y: auto; border-top: 1px solid rgba(255,255,255,0.1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .modal-header h2 { font-size: 16px; font-weight: 800; color: #ffffff; }
+        
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 11px; color: #888888; margin-bottom: 5px; font-weight: 700; text-transform: uppercase; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333333; background: #121212; color: #ffffff; font-size: 14px; outline: none; }
+        .form-group input:focus, .form-group select:focus { border-color: #ff9800; }
+
+        .preset-tabs { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 14px; padding-bottom: 4px; }
+        .preset-tab-btn { background: #222; border: 1px solid #333; color: #aaa; padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+        .preset-tab-btn.active { background: #ff9800; color: #000; border-color: #ff9800; }
+
+        .rev-filter-container { background: #222; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
+        .rev-filter-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .rev-filter-tab-btn { background: #181818; border: 1px solid #333; color: #aaa; padding: 8px 4px; border-radius: 8px; font-size: 11px; font-weight: 700; text-align: center; cursor: pointer; white-space: nowrap; }
+        .rev-filter-tab-btn.active { background: #ff9800; color: #000; border-color: #ff9800; }
+        
+        .rev-custom-date-box { display: none; grid-template-columns: 1fr 1fr; gap: 8px; align-items: center; }
+        .rev-date-input-group { display: flex; flex-direction: column; gap: 4px; }
+        .rev-date-input-group label { font-size: 10px; color: #888; font-weight: 700; text-transform: uppercase; }
+        .rev-date-input-group input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #333; background: #121212; color: #fff; font-size: 12px; outline: none; }
+        
+        .btn-view-rev { background: #0284c7; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 800; font-size: 13px; cursor: pointer; text-transform: uppercase; width: 100%; }
+        
+        .rev-summary-card { background: #181818; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px; text-align: center; display: flex; flex-direction: column; gap: 6px; }
+        .rev-summary-row { display: flex; justify-content: space-between; font-size: 12px; color: #aaa; font-weight: 700; }
+        .rev-summary-row span:last-child { color: #fff; font-weight: 800; }
+        .rev-summary-total { font-size: 26px; font-weight: 900; color: #38bdf8; margin-top: 4px; }
+
+        .history-batch-actions { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; background: #222; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
+        .batch-select-all { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; color: #ff9800; cursor: pointer; }
+        .batch-select-all input { width: 16px; height: 16px; accent-color: #ff9800; cursor: pointer; }
+        .btn-batch-invoice { background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 800; font-size: 11px; cursor: pointer; text-transform: uppercase; display: none; }
+
+        .history-list-title { font-size: 11px; color: #ff9800; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .history-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+        .history-item { background: #222; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .history-item:active { background: #2a2a2a; }
+        .history-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+        .history-checkbox { width: 18px; height: 18px; accent-color: #ff9800; cursor: pointer; flex-shrink: 0; }
+        .history-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+        .history-code { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .history-time { font-size: 11px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .history-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; margin-left: 8px; }
+        .history-fare { font-size: 14px; font-weight: 900; }
+        .history-dist { font-size: 11px; color: #aaa; font-weight: 700; }
+        .btn-delete-trip { background: transparent; border: none; color: #ef4444; font-size: 16px; padding: 4px; cursor: pointer; margin-left: 8px; }
+
+        .discount-container { margin-bottom: 14px; background: #1f1f1f; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 10px; }
+        .discount-container .discount-title { font-size: 11px; color: #ff9800; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .discount-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .discount-field { display: flex; flex-direction: column; gap: 4px; }
+        .discount-field label { font-size: 10px; color: #aaa; font-weight: 700; text-transform: uppercase; }
+        .discount-field input { padding: 10px; font-size: 14px; border-radius: 6px; border: 1px solid #333; background: #121212; color: #fff; outline: none; }
+        .discount-field input:focus { border-color: #ff9800; }
+
+        .unpaid-checkbox-wrapper { display: flex; align-items: center; gap: 8px; margin-top: 4px; background: #121212; padding: 10px; border-radius: 6px; border: 1px solid #333; cursor: pointer; }
+        .unpaid-checkbox-wrapper input { width: 18px; height: 18px; accent-color: #ef4444; cursor: pointer; }
+        .unpaid-checkbox-wrapper label { font-size: 12px; color: #ef4444; font-weight: 800; cursor: pointer; margin: 0; text-transform: none !important; }
+
+        .lang-selector-box { display: flex; align-items: center; justify-content: space-between; background: #111; padding: 8px 12px; border-radius: 6px; border: 1px solid #333; font-size: 11px; color: #0284c7; font-weight: 800; gap: 10px; }
+        .lang-selector-dropdown { background: #181818; color: #38bdf8; border: 1px solid #333; padding: 6px 10px; border-radius: 6px; font-weight: 800; font-size: 12px; outline: none; flex: 1; }
+
+        .zoom-wrapper { width: 100%; max-height: 52vh; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: #181818; margin-bottom: 14px; overflow-y: auto; }
+        .printable-invoice { background: #181818; color: #e0e0e0; padding: 20px; font-size: 12px; width: 100%; }
+        
+        .inv-header { text-align: center; border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 12px; }
+        .inv-header h3 { font-size: 16px; font-weight: 900; color: #ffffff; letter-spacing: 1px; }
+        .inv-header p { font-size: 11px; color: #888888; margin-top: 4px; font-weight: 700; }
+        
+        .driver-info-box { background: #222222; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 600; color: #888; border: 1px solid rgba(255,255,255,0.05); }
+        .driver-info-box span { color: #ffffff; font-weight: 800; }
+
+        .invoice-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; font-size: 11px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; gap: 10px; }
+        .invoice-row span:first-child { font-weight: 600; color: #888; flex-shrink: 0; }
+        .invoice-row span:last-child { font-family: monospace; font-weight: 800; color: #ffffff; text-align: right; word-break: break-word; }
+
+        .invoice-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 11px; }
+        .invoice-table th, .invoice-table td { padding: 8px 0; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .invoice-table th { color: #888; font-weight: 700; font-size: 10px; text-transform: uppercase; }
+        .invoice-table td.num { text-align: right; font-weight: 800; color: #ffffff; }
+
+        .total-box { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-top: 2px solid rgba(255,255,255,0.15); margin-top: 8px; }
+        .total-box span { font-weight: 800; font-size: 12px; color: #ffffff; }
+        .total-box strong { color: #ff9800; font-size: 18px; font-weight: 900; }
+
+        .qr-container { text-align: center; margin-top: 14px; background: #222222; padding: 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 14px; }
+        .qr-container img { width: 130px; height: 130px; object-fit: contain; border-radius: 6px; background: #ffffff; flex-shrink: 0; padding: 6px; cursor: pointer; transition: transform 0.2s; }
+        .qr-container img:active { transform: scale(0.96); }
+        .qr-details { text-align: left; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+        .qr-details p { font-size: 11px; color: #888888; font-weight: 700; }
+        .qr-details .qr-bank { color: #ffffff; font-size: 12px; font-weight: 800; }
+        .qr-details .qr-acc { font-family: monospace; color: #38bdf8; font-size: 13px; font-weight: 900; }
+        .qr-details .qr-name { color: #e0e0e0; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+        .qr-details .qr-amount { color: #ff9800; font-size: 16px; font-weight: 950; margin-top: 4px; }
+
+        .qr-zoom-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; padding: 20px; }
+        .qr-zoom-modal img { width: 85vw; max-width: 380px; height: 85vw; max-height: 380px; object-fit: contain; background: #ffffff; border-radius: 16px; padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .qr-zoom-close { margin-top: 20px; background: #333; color: #fff; border: none; padding: 12px 28px; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; }
+
+        @media print {
+            body, html { background: #ffffff !important; color: #000000 !important; overflow: visible !important; height: auto !important; position: static !important; }
+            header, .dashboard, .modal-header, .discount-container, .action-buttons, .btn-save-trip, .qr-zoom-modal, #settingsModal, #historyModal { display: none !important; }
+            .modal { position: absolute !important; top: 0 !important; left: 0 !important; width: 100% !important; height: auto !important; background: transparent !important; backdrop-filter: none !important; display: block !important; }
+            .modal-content { background: #ffffff !important; color: #000000 !important; max-height: none !important; padding: 0 !important; border: none !important; border-radius: 0 !important; }
+            .zoom-wrapper { max-height: none !important; border: none !important; background: #ffffff !important; overflow: visible !important; }
+            .printable-invoice { background: #ffffff !important; color: #000000 !important; padding: 0 !important; border: none !important; }
+            .inv-header h3 { color: #000000 !important; }
+            .inv-header p { color: #555555 !important; }
+            .driver-info-box { background: #f5f5f5 !important; border: 1px solid #dddddd !important; color: #333333 !important; }
+            .driver-info-box span { color: #000000 !important; }
+            .invoice-row span:first-child { color: #555555 !important; }
+            .invoice-row span:last-child { color: #000000 !important; }
+            .invoice-table th { color: #555555 !important; }
+            .invoice-table td.num { color: #000000 !important; }
+            .total-box span { color: #000000 !important; }
+            .total-box strong { color: #d97706 !important; }
+            .qr-container { background: #f9f9f9 !important; border: 1px solid #dddddd !important; }
+            .qr-details p, .qr-details .qr-name { color: #555555 !important; }
+            .qr-details .qr-bank { color: #000000 !important; }
+            .qr-details .qr-acc { color: #0284c7 !important; }
+            .qr-details .qr-amount { color: #d97706 !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <button class="btn-header" onclick="openHistory()" title="Lịch sử chuyến đi">📜</button>
+        <div class="header-center-info">
+            <div class="app-title-main">EV-TAXIMET</div>
+            <div class="app-author-sub">by Tinh Tran</div>
+            <div class="header-sub-details" id="headerSubDetails">TÌNH TRẦN • 93A-594.16</div>
+        </div>
+        <button class="btn-header" onclick="openSettings()" title="Cài đặt">⚙️</button>
+    </header>
+
+    <div class="dashboard">
+        <div class="dashboard-content-group">
+            <div class="rate-selector-bar">
+                <div class="rate-selector-label">🏷️ BẢNG GIÁ:</div>
+                <select id="mainRatePresetSelect" class="rate-selector-dropdown" onchange="onMainPresetChange()"></select>
+            </div>
+
+            <div class="gps-status-container">
+                <div class="gps-icon">📍</div>
+                <div class="gps-info-box">
+                    <div class="gps-title" id="gpsStatusText">Đang chờ tín hiệu GPS...</div>
+                    <div class="gps-coords-live" id="liveCoords">Tọa độ: Đang kết nối...</div>
+                </div>
+            </div>
+
+            <div class="gps-lost-banner" id="gpsLostBanner">
+                <div>⚠️ Mất tín hiệu GPS quá lâu! Quãng đường có thể bị sai lệch.</div>
+                <div class="manual-km-box">
+                    <label for="manualAddKm">+km bù trừ:</label>
+                    <input type="number" id="manualAddKm" value="1" step="0.1" min="0" oninput="updateDisplay()">
+                </div>
+            </div>
+
+            <div class="fare-hero-box">
+                <div class="metric-label">Tổng cước phí</div>
+                <div class="metric-value-huge" id="fareDisplay">0 đ</div>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-card-label">Quãng đường</div>
+                    <div class="metric-card-value" id="distanceDisplay">0.00 km</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-card-label">Tốc độ</div>
+                    <div class="metric-card-value" id="speedDisplay">0 km/h</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-card-label">Thời gian</div>
+                    <div class="metric-card-value" id="timeDisplay">00:00 (0m)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-section">
+            <div class="btn-group">
+                <button class="btn btn-start" id="btnStart" onclick="startTrip()">Bắt đầu chuyến</button>
+                <button class="btn btn-pause" id="btnPause" onclick="togglePauseTrip()">Tạm dừng</button>
+                <button class="btn btn-stop" id="btnStop" onclick="stopTrip()">Dừng chuyến</button>
+            </div>
+            <button class="btn btn-invoice" id="btnInvoice" onclick="showInvoice()">Xem Hóa đơn & QR</button>
+        </div>
+    </div>
+
+    <!-- Modal Lịch sử & Doanh thu -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Lịch sử & Doanh thu</h2>
+                <button class="btn-header" style="width: auto; padding: 0 12px; font-size: 12px;" onclick="closeHistory()">Đóng</button>
+            </div>
+            
+            <div class="rev-filter-container">
+                <div class="rev-filter-tabs">
+                    <button class="rev-filter-tab-btn active" id="filterTabToday" onclick="setRevFilter('today')">Hôm nay</button>
+                    <button class="rev-filter-tab-btn" id="filterTab7Days" onclick="setRevFilter('7days')">7 ngày</button>
+                    <button class="rev-filter-tab-btn" id="filterTab30Days" onclick="setRevFilter('30days')">30 ngày</button>
+                    <button class="rev-filter-tab-btn" id="filterTabCustom" onclick="setRevFilter('custom')">Tùy chọn</button>
+                </div>
+
+                <div class="rev-custom-date-box" id="customDateRangeBox">
+                    <div class="rev-date-input-group">
+                        <label>Từ ngày</label>
+                        <input type="date" id="historyDateStart">
+                    </div>
+                    <div class="rev-date-input-group">
+                        <label>Đến ngày</label>
+                        <input type="date" id="historyDateEnd">
+                    </div>
+                </div>
+
+                <button class="btn-view-rev" onclick="renderHistory()">Xem doanh thu</button>
+
+                <div class="rev-summary-card">
+                    <div class="rev-summary-row">
+                        <span>Tổng số chuyến:</span>
+                        <span id="summaryTotalTrips">0 chuyến</span>
+                    </div>
+                    <div class="rev-summary-row">
+                        <span>Tổng quãng đường:</span>
+                        <span id="summaryTotalDist">0.00 km</span>
+                    </div>
+                    <div class="rev-summary-total" id="summaryTotalRevenue">0 đ</div>
+                </div>
+            </div>
+
+            <div class="history-batch-actions">
+                <label class="batch-select-all">
+                    <input type="checkbox" id="selectAllUnpaid" onclick="toggleSelectAllUnpaid(this)"> Chọn tất cả chưa thanh toán
+                </label>
+                <button class="btn-batch-invoice" id="btnBatchInvoice" onclick="exportBatchInvoice()">Xuất hóa đơn tổng</button>
+            </div>
+
+            <div class="history-list-title">DANH SÁCH CHUYẾN ĐI (TỰ ĐỌC DỮ LIỆU 30 NGÀY GẦN NHẤT)</div>
+            <div class="history-list" id="historyListContainer"></div>
+            
+            <button class="btn-secondary" style="width: 100%; background: #222; color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);" onclick="clearAllHistory()">Xóa toàn bộ lịch sử</button>
+        </div>
+    </div>
+
+    <!-- Modal Cài đặt -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Cấu hình Chuyến xe</h2>
+                <button class="btn-header" style="width: auto; padding: 0 12px; font-size: 12px;" onclick="closeSettings()">Xong</button>
+            </div>
+            
+            <div style="color: #ff9800; font-weight: 700; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.5px;">THÔNG TIN TÀI XẾ & XE</div>
+            <div class="form-group"><label>Tên tài xế</label><input type="text" id="driverName" value="TÌNH TRẦN"></div>
+            <div class="form-group"><label>Biển số xe</label><input type="text" id="carPlate" value="93A-594.16"></div>
+
+            <hr style="margin: 12px 0; border: none; border-top: 1px solid rgba(255,255,255,0.08);">
+            <div style="color: #ff9800; font-weight: 700; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.5px;">CẤU HÌNH BẢNG GIÁ VẬN CHUYỂN</div>
+            
+            <div class="preset-tabs" id="presetTabsContainer"></div>
+
+            <div class="form-group"><label>Tên cấu hình bảng giá</label><input type="text" id="presetName" value="Mặc định"></div>
+            <div class="form-group"><label>Quãng đường mở cửa (km)</label><input type="number" step="0.1" id="baseDistanceKm" value="1.0"></div>
+            <div class="form-group"><label>Giá mở cửa (VNĐ)</label><input type="number" id="baseFare" value="10000"></div>
+            <div class="form-group"><label>Giá mỗi km tiếp theo (VNĐ/km)</label><input type="number" id="ratePerKm" value="15000"></div>
+            <div class="form-group"><label>Số phút chờ miễn phí (Phút)</label><input type="number" id="freeWaitMins" value="5"></div>
+            <div class="form-group"><label>Giá phí chờ (VNĐ/phút)</label><input type="number" id="ratePerWaitMin" value="1000"></div>
+
+            <hr style="margin: 12px 0; border: none; border-top: 1px solid rgba(255,255,255,0.08);">
+            <div style="color: #ff9800; font-weight: 700; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.5px;">TÀI KHOẢN NHẬN TIỀN (VIETQR)</div>
+            <div class="form-group">
+                <label>Ngân hàng / Ví điện tử</label>
+                <select id="bankId">
+                    <optgroup label="--- NGÂN HÀNG SỐ & VÍ ĐIỆN TỬ PHỔ BIẾN ---">
+                        <option value="MOMO">Ví điện tử MoMo</option>
+                        <option value="ZALO PAY">Ví điện tử ZaloPay</option>
+                        <option value="VIETTELPAY">Viettel Money (ViettelPay)</option>
+                        <option value="VNPAY">Ví điện tử VNPay</option>
+                        <option value="VETC">Ví điện tử VETC</option>
+                    </optgroup>
+                    <optgroup label="--- NGÂN HÀNG THƯƠNG MẠI ---">
+                        <option value="MB">MBBank (Ngân hàng Quân Đội)</option>
+                        <option value="TCB">Techcombank (Kỹ Thương)</option>
+                        <option value="VCB">Vietcombank (Ngoại Thương)</option>
+                        <option value="ICB">VietinBank (Công Thương)</option>
+                        <option value="BIDV">BIDV (Đầu Tư và Phát Triển)</option>
+                        <option value="VPB">VPBank (Việt Nam Thịnh Vượng)</option>
+                        <option value="ACB">ACB (Á Châu)</option>
+                        <option value="TPB">TPBank (Tiên Phong)</option>
+                        <option value="STB">Sacombank (Sài Gòn Thương Tín)</option>
+                        <option value="VIB">VIB (Quốc Tế)</option>
+                        <option value="SHB">SHB (Sài Gòn - Hà Nội)</option>
+                        <option value="MSB">MSB (Hàng Hải)</option>
+                        <option value="OCB">OCB (Phương Đông)</option>
+                        <option value="HDB">HDBank (Phát Triển TP.HCM)</option>
+                        <option value="LPB">LPBank (Lộc Phát - Liên Việt)</option>
+                        <option value="SEAB">SeABank (Đông Nam Á)</option>
+                        <option value="ABB">ABBank (An Bình)</option>
+                        <option value="BAB">Bac A Bank (Bắc Á)</option>
+                        <option value="BVB">BaoVietBank (Bảo Việt)</option>
+                        <option value="CIMB">CIMB Bank Việt Nam</option>
+                        <option value="COOPBANK">Co-opBank (Hợp Tác Xã)</option>
+                        <option value="DBS">DBS Bank (Chi nhánh TP.HCM)</option>
+                        <option value="DOB">DongA Bank (Đông Á)</option>
+                        <option value="EIB">Eximbank (Xuất Nhập Khẩu)</option>
+                        <option value="GPB">GPBank (Dầu Khí Toàn Cầu)</option>
+                        <option value="HLBVN">Hong Leong Bank</option>
+                        <option value="HSBC">HSBC Việt Nam</option>
+                        <option value="IBK">IBK - Chi nhánh TP.HCM/Hà Nội</option>
+                        <option value="Indovina">Indovina Bank</option>
+                        <option value="KBANK">KBank - Chi nhánh TP.HCM</option>
+                        <option value="KFH">Kookmin Bank - Hà Nội/TP.HCM</option>
+                        <option value="KLB">KienlongBank (Kiên Long)</option>
+                        <option value="NCB">NCB (Quốc Dân)</option>
+                        <option value="NONGHYUP">NongHyup Bank - Hà Nội</option>
+                        <option value="OceanBank">OceanBank (Đại Dương)</option>
+                        <option value="PGB">PGBank (Xăng Dầu Petrolimex)</option>
+                        <option value="PVcomBank">PVcomBank (Đại Chúng)</option>
+                        <option value="SGB">Saigonbank (Sài Gòn Công Thương)</option>
+                        <option value="SCB">SCB (Sài Gòn)</option>
+                        <option value="SHBVN">Shinhan Bank Việt Nam</option>
+                        <option value="SCVN">Standard Chartered Việt Nam</option>
+                        <option value="TCB">Techcombank</option>
+                        <option value="TPB">TPBank</option>
+                        <option value="UOB">UOB Việt Nam (United Overseas)</option>
+                        <option value="VAB">VietABank (Việt Á)</option>
+                        <option value="VCCB">VietCapitalBank (Bản Việt / Cake)</option>
+                        <option value="VIB">VIB</option>
+                        <option value="VID">VID Public</option>
+                        <option value="VIETBANK">VietBank (Việt Nam Thương Tín)</option>
+                        <option value="VRB">VRB (Liên Doanh Việt - Nga)</option>
+                        <option value="WVN">Woori Bank Việt Nam</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div class="form-group"><label>Số tài khoản</label><input type="text" id="accountNo" value="0987654321"></div>
+            <div class="form-group"><label>Tên chủ tài khoản (Viết hoa không dấu)</label><input type="text" id="accountName" value="TRAN NGOC TINH"></div>
+
+            <button class="btn btn-start" style="width:100%; margin-top:10px; padding: 14px;" onclick="saveSettings()">Lưu cài đặt</button>
+        </div>
+    </div>
+
+    <!-- Modal Hóa đơn -->
+    <div class="modal" id="invoiceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalInvoiceTitle">Hóa đơn chuyến đi</h2>
+                <button class="btn-header" style="width: auto; padding: 0 12px; font-size: 12px;" onclick="closeInvoice()">Đóng</button>
+            </div>
+
+            <div class="discount-container" id="singleInvoiceConfigBox">
+                <div class="discount-title">PHỤ PHÍ & CHIẾT KHẤU (Đơn vị: 1.000đ)</div>
+                <div class="discount-inputs">
+                    <div class="discount-field">
+                        <label for="tollFee">Phí cầu đường (x1k)</label>
+                        <input type="number" id="tollFee" step="1" min="0" oninput="updateInvoiceCalculations()" placeholder="Vd: 15 = 15k">
+                    </div>
+                    <div class="discount-field">
+                        <label for="extraFee">Phụ phí khác (x1k)</label>
+                        <input type="number" id="extraFee" step="1" min="0" oninput="updateInvoiceCalculations()" placeholder="Vd: 20 = 20k">
+                    </div>
+                </div>
+                <div class="discount-inputs">
+                    <div class="discount-field">
+                        <label for="discountAmount">Giảm trực tiếp (x1k)</label>
+                        <input type="number" id="discountAmount" step="1" min="0" oninput="updateInvoiceCalculations()" placeholder="Vd: 5 = 5k">
+                    </div>
+                    <div class="discount-field">
+                        <label for="discountPercent">Giảm phần trăm (%)</label>
+                        <input type="number" id="discountPercent" min="0" max="100" step="1" oninput="updateInvoiceCalculations()" placeholder="Nhập %">
+                    </div>
+                </div>
+
+                <div class="discount-inputs" style="grid-template-columns: 1fr; margin-top: 4px;">
+                    <div class="discount-field">
+                        <label for="customerName">Tên khách hàng</label>
+                        <input type="text" id="customerName" placeholder="Nhập tên khách hàng..." oninput="updateInvoiceCalculations()">
+                    </div>
+                </div>
+                
+                <div class="unpaid-checkbox-wrapper">
+                    <input type="checkbox" id="unpaidCheckbox" onchange="toggleUnpaidStatus()">
+                    <label for="unpaidCheckbox">Đánh dấu chuyến chưa thanh toán</label>
+                </div>
+
+                <div class="lang-selector-box" style="margin-top: 4px;">
+                    <span>🌐 NGÔN NGỮ HÓA ĐƠN</span>
+                    <select id="invoiceLangSelect" class="lang-selector-dropdown" onchange="updateInvoiceCalculations()">
+                        <option value="vi">Tiếng Việt</option>
+                        <option value="en">English (Tiếng Anh)</option>
+                        <option value="zh">中文 (Tiếng Trung)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="zoom-wrapper">
+                <div class="printable-invoice" id="printableArea">
+                    <div class="inv-header">
+                        <h3 id="lblInvTitle">HÓA ĐƠN VẬN CHUYỂN TAXI</h3>
+                        <p id="invTripCode">MÃ CHUYẾN: --</p>
+                    </div>
+
+                    <div class="driver-info-box">
+                        <div><span id="lblDriver">Tài xế</span>: <span id="invDriverName">--</span></div>
+                        <div><span id="lblCarPlate">Biển số</span>: <span id="invCarPlate">--</span></div>
+                    </div>
+
+                    <div class="invoice-row" id="invCustomerRow" style="display: none;">
+                        <span id="lblCustomer">Khách hàng:</span>
+                        <span id="invCustomerNameVal">--</span>
+                    </div>
+
+                    <div class="invoice-row" id="singleRouteInfoContainer">
+                        <div>
+                            <div class="invoice-row" style="border:none; margin:0; padding:0;"><span id="lblPickup">Điểm đón:</span> <span id="invPickupCoords">--</span></div>
+                            <div class="invoice-row" style="border:none; margin:4px 0 0 0; padding:0;"><span id="lblDropoff">Điểm trả:</span> <span id="invDropoffCoords">--</span></div>
+                        </div>
+                    </div>
+
+                    <div id="singleTimeInfoContainer" style="font-size: 11px; color: #888; margin: 8px 0; display: flex; justify-content: space-between; background: #222; padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div><span id="lblStart">Bắt đầu</span>: <strong id="invStartTime" style="color:#fff;">--</strong></div>
+                        <div><span id="lblEnd">Kết thúc</span>: <strong id="invEndTime" style="color:#fff;">--</strong></div>
+                    </div>
+
+                    <table class="invoice-table" id="singleInvoiceTable">
+                        <thead>
+                            <tr>
+                                <th id="lblColDetail">Mục chi tiết</th>
+                                <th id="lblColAmount" style="text-align: right;">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span id="lblBaseFareText">Mở cửa</span> (<span id="invBaseDist">1.0</span> km)</td>
+                                <td class="num" id="invBaseFare">0 đ</td>
+                            </tr>
+                            <tr>
+                                <td><span id="lblExtraKmText">Km tiếp</span> (<span id="invExtraKm">0.00</span> km)</td>
+                                <td class="num" id="invExtraFare">0 đ</td>
+                            </tr>
+                            <tr>
+                                <td><span id="lblWaitText">Phí chờ</span> (<span id="invWaitMins">0</span>m)</td>
+                                <td class="num" id="invWaitFare">0 đ</td>
+                            </tr>
+                            <tr id="invTollRow" style="display: none; color: #ffb74d;">
+                                <td id="lblTollText">Phí cầu đường</td>
+                                <td class="num" id="invTollFare">+0 đ</td>
+                            </tr>
+                            <tr id="invExtraFeeRow" style="display: none; color: #ffb74d;">
+                                <td id="lblExtraFeeText">Phụ phí khác</td>
+                                <td class="num" id="invExtraFeeVal">+0 đ</td>
+                            </tr>
+                            <tr id="invDiscountRow" style="display: none; color: #38bdf8;">
+                                <td id="invDiscountLabel">Chiết khấu</td>
+                                <td class="num" id="invDiscountVal">-0 đ</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Bảng danh sách cho hóa đơn tổng hợp -->
+                    <table class="invoice-table" id="batchInvoiceTable" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>Chi tiết chuyến xe</th>
+                                <th style="text-align: right;">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody id="batchTableBody"></tbody>
+                    </table>
+
+                    <div class="total-box">
+                        <span id="lblTotalFare">TỔNG CƯỚC PHÍ:</span>
+                        <strong id="invFare">0 đ</strong>
+                    </div>
+
+                    <div class="qr-container" id="qrContainerBox">
+                        <img id="qrImage" src="" alt="Mã QR Thanh toán" onclick="openZoomQR()" title="Nhấp để phóng to QR">
+                        <div class="qr-details">
+                            <p id="lblScanQR">Quét VietQR thanh toán:</p>
+                            <div class="qr-bank" id="qrBankText">Techcombank</div>
+                            <div class="qr-acc" id="qrAccText">797979797928</div>
+                            <div class="qr-name" id="qrNameText">TRAN NGOC TINH</div>
+                            <div class="qr-amount" id="qrAmountText">0 đ</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-save-trip" id="btnSaveTrip" onclick="saveAndCloseInvoice()">Lưu chuyến đi</button>
+
+            <div class="action-buttons" id="actionButtonsNormal">
+                <button class="btn-secondary" onclick="exportPDF()">📄 Xuất PDF</button>
+                <button class="btn-share" onclick="shareInvoiceImage()">📸 Chia sẻ Ảnh</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Phóng to QR -->
+    <div class="qr-zoom-modal" id="qrZoomModal" onclick="openZoomQR()">
+        <img id="qrZoomImage" src="" alt="Phóng to QR">
+        <button class="qr-zoom-close" onclick="closeZoomQR()">Đóng</button>
+    </div>
+
+    <script>
+        const translations = {
+            vi: {
+                title: "HÓA ĐƠN VẬN CHUYỂN TAXI",
+                tripCode: "MÃ CHUYẾN:",
+                driver: "Tài xế",
+                carPlate: "Biển số",
+                customer: "Khách hàng:",
+                pickup: "Điểm đón:",
+                dropoff: "Điểm trả:",
+                start: "Bắt đầu",
+                end: "Kết thúc",
+                colDetail: "Mục chi tiết",
+                colAmount: "Thành tiền",
+                baseFare: "Mở cửa",
+                extraKm: "Km tiếp",
+                wait: "Phí chờ",
+                toll: "Phí cầu đường",
+                extraFee: "Phụ phí khác",
+                discount: "Chiết khấu",
+                total: "TỔNG CƯỚC PHÍ:",
+                scanQR: "Quét VietQR thanh toán:"
+            },
+            en: {
+                title: "TAXI TRANSPORT INVOICE",
+                tripCode: "TRIP CODE:",
+                driver: "Driver",
+                carPlate: "Plate No.",
+                customer: "Customer:",
+                pickup: "Pickup Location:",
+                dropoff: "Dropoff Location:",
+                start: "Start",
+                end: "End",
+                colDetail: "Item Details",
+                colAmount: "Amount",
+                baseFare: "Base Fare",
+                extraKm: "Extra Km",
+                wait: "Waiting Fee",
+                toll: "Toll Fee",
+                extraFee: "Other Fees",
+                discount: "Discount",
+                total: "TOTAL FARE:",
+                scanQR: "Scan VietQR to pay:"
+            },
+            zh: {
+                title: "出租车行程发票",
+                tripCode: "行程代码:",
+                driver: "司机",
+                carPlate: "车牌号",
+                customer: "客户:",
+                pickup: "上车地点:",
+                dropoff: "下车地点:",
+                start: "开始",
+                end: "结束",
+                colDetail: "项目详情",
+                colAmount: "金额",
+                baseFare: "起步价",
+                extraKm: "续行公里",
+                wait: "等待费",
+                toll: "过路费",
+                extraFee: "其他费用",
+                discount: "折扣",
+                total: "总车费:",
+                scanQR: "扫描 VietQR 支付:"
+            }
+        };
+
+        const defaultPresets = [
+            { id: 0, name: "Giá Mặc Định", baseDistanceKm: 1.0, baseFare: 10000, ratePerKm: 15000, freeWaitMins: 5, ratePerWaitMin: 1000 },
+            { id: 1, name: "Cước Nội Tỉnh", baseDistanceKm: 1.0, baseFare: 12000, ratePerKm: 14000, freeWaitMins: 5, ratePerWaitMin: 1000 },
+            { id: 2, name: "Cước Đi Tỉnh", baseDistanceKm: 2.0, baseFare: 20000, ratePerKm: 12000, freeWaitMins: 10, ratePerWaitMin: 1000 },
+            { id: 3, name: "Cước Đêm / Lễ", baseDistanceKm: 1.0, baseFare: 15000, ratePerKm: 18000, freeWaitMins: 3, ratePerWaitMin: 1500 },
+            { id: 4, name: "Cước VIP / 7 Chỗ", baseDistanceKm: 1.0, baseFare: 15000, ratePerKm: 17000, freeWaitMins: 5, ratePerWaitMin: 1200 }
+        ];
+
+        let config = { 
+            driverName: 'TÌNH TRẦN',
+            carPlate: '93A-594.16',
+            bankId: 'MB', 
+            accountNo: '0987654321', 
+            accountName: 'TRAN NGOC TINH',
+            activePresetIndex: 0,
+            presets: defaultPresets
+        };
+
+        let activeSettingsTab = 0;
+        let currentRevFilter = 'today';
+        let isRunning = false, isPaused = false, hasTripEnded = false;
+        let watchId = null, timerId = null, startTimestamp = null, endTimestamp = null;
+        let totalSeconds = 0, waitSeconds = 0, totalDistance = 0, currentSpeedKmh = 0;
+        
+        let tripLastLat = null, tripLastLon = null;
+        let globalLat = null, globalLon = null;
+        let startCoordsStr = "", endCoordsStr = "", currentTripCode = "";
+        let pausedSecondsTotal = 0, pauseStartedAt = null;
+
+        let lastValidLat = null;
+        let lastValidLon = null;
+        let lastValidTime = null;
+        let wakeLock = null;
+        let lastGpsTimestamp = Date.now();
+
+        // --- BỘ LỌC KALMAN 1 CHIỀU (ĐƠN GIẢN HÓA CHO TỌA ĐỘ VÀ TỐC ĐỘ) ---
+        let kalmanState = {
+            lat: null,
+            lon: null,
+            variance: 1.0
+        };
+
+        function kalmanFilterUpdate(measuredLat, measuredLon, measuredAccuracy) {
+            if (kalmanState.lat === null || kalmanState.lon === null) {
+                kalmanState.lat = measuredLat;
+                kalmanState.lon = measuredLon;
+                kalmanState.variance = measuredAccuracy * measuredAccuracy;
+                return { lat: measuredLat, lon: measuredLon };
+            }
+
+            let q = 0.00001;
+            let r = measuredAccuracy * measuredAccuracy;
+            let variancePrediction = kalmanState.variance + q;
+
+            let kalmanGain = variancePrediction / (variancePrediction + r);
+            kalmanState.lat = kalmanState.lat + kalmanGain * (measuredLat - kalmanState.lat);
+            kalmanState.lon = kalmanState.lon + kalmanGain * (measuredLon - kalmanState.lon);
+            kalmanState.variance = (1 - kalmanGain) * variancePrediction;
+
+            return { lat: kalmanState.lat, lon: kalmanState.lon };
+        }
+
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator && 'request' in navigator.wakeLock) {
+                try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
+            }
+        }
+        
+        function releaseWakeLock() {
+            if (wakeLock !== null) { wakeLock.release().then(() => { wakeLock = null; }); }
+        }
+
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible' && isRunning) {
+                await requestWakeLock();
+            }
+        });
+
+        window.addEventListener('beforeunload', (e) => {
+            if (isRunning) {
+                e.preventDefault();
+                e.returnValue = 'Chuyến đi đang chạy. Bạn có chắc muốn thoát?';
+            }
+        });
+
+        function getActivePreset() {
+            return config.presets[config.activePresetIndex] || config.presets[0];
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('ev_taximet_config_v3');
+            if (saved) {
+                try { 
+                    const parsed = JSON.parse(saved);
+                    config = { ...config, ...parsed };
+                    if (!config.presets || config.presets.length < 5) config.presets = defaultPresets;
+                } catch (e) {}
+            }
+            document.getElementById('driverName').value = config.driverName || 'TÌNH TRẦN';
+            document.getElementById('carPlate').value = config.carPlate || '93A-594.16';
+            document.getElementById('bankId').value = config.bankId || 'MB';
+            document.getElementById('accountNo').value = config.accountNo || '';
+            document.getElementById('accountName').value = config.accountName || '';
+            document.getElementById('headerSubDetails').innerText = `${config.driverName || 'Tài xế'} • ${config.carPlate || 'Biển số'}`;
+
+            renderMainPresetSelect();
+            activeSettingsTab = config.activePresetIndex;
+            renderSettingsPresetTabs();
+            loadPresetToSettingsForm(activeSettingsTab);
+        }
+
+        function renderMainPresetSelect() {
+            const select = document.getElementById('mainRatePresetSelect');
+            select.innerHTML = config.presets.map((p, idx) => 
+                `<option value="${idx}" ${idx === config.activePresetIndex ? 'selected' : ''}>${p.name}</option>`
+            ).join('');
+        }
+
+        function onMainPresetChange() {
+            const select = document.getElementById('mainRatePresetSelect');
+            config.activePresetIndex = parseInt(select.value) || 0;
+            localStorage.setItem('ev_taximet_config_v3', JSON.stringify(config));
+            updateDisplay();
+            if (isRunning) saveTripDraft();
+        }
+
+        function renderSettingsPresetTabs() {
+            const container = document.getElementById('presetTabsContainer');
+            container.innerHTML = config.presets.map((p, idx) => 
+                `<button class="preset-tab-btn ${idx === activeSettingsTab ? 'active' : ''}" onclick="switchSettingsTab(${idx})">${idx + 1}. ${p.name}</button>`
+            ).join('');
+        }
+
+        function switchSettingsTab(index) {
+            saveCurrentTabFieldsToConfig();
+            activeSettingsTab = index;
+            renderSettingsPresetTabs();
+            loadPresetToSettingsForm(index);
+        }
+
+        function loadPresetToSettingsForm(index) {
+            const p = config.presets[index];
+            document.getElementById('presetName').value = p.name;
+            document.getElementById('baseDistanceKm').value = p.baseDistanceKm;
+            document.getElementById('baseFare').value = p.baseFare;
+            document.getElementById('ratePerKm').value = p.ratePerKm;
+            document.getElementById('freeWaitMins').value = p.freeWaitMins;
+            document.getElementById('ratePerWaitMin').value = p.ratePerWaitMin;
+        }
+
+        function saveCurrentTabFieldsToConfig() {
+            const p = config.presets[activeSettingsTab];
+            if (p) {
+                p.name = document.getElementById('presetName').value.trim() || `Cấu hình ${activeSettingsTab + 1}`;
+                p.baseDistanceKm = parseFloat(document.getElementById('baseDistanceKm').value) || 1.0;
+                p.baseFare = parseFloat(document.getElementById('baseFare').value) || 0;
+                p.ratePerKm = parseFloat(document.getElementById('ratePerKm').value) || 0;
+                p.freeWaitMins = parseFloat(document.getElementById('freeWaitMins').value) || 0;
+                p.ratePerWaitMin = parseFloat(document.getElementById('ratePerWaitMin').value) || 0;
+            }
+        }
+
+        loadSettings();
+
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(pos => {
+                const { latitude, longitude } = pos.coords;
+                globalLat = latitude;
+                globalLon = longitude;
+                document.getElementById('liveCoords').innerText = `Tọa độ: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+                if (!isRunning) {
+                    document.getElementById('gpsStatusText').innerText = "Đã sẵn sàng kết nối GPS";
+                }
+            }, (err) => {
+                if (!isRunning) {
+                    document.getElementById('liveCoords').innerText = "Vui lòng bật định vị GPS";
+                    document.getElementById('gpsStatusText').innerText = "Chưa nhận tín hiệu GPS";
+                }
+            }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 });
+        }
+
+        function calcDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; 
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+        }
+
+        async function getOpenStreetMapAddress(lat, lon) {
+            if (lat === null || lon === null || isNaN(lat) || isNaN(lon)) return "Chưa có tọa độ";
+            try {
+                const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
+                const response = await fetch(url, { 
+                    headers: { 
+                        'Accept-Language': 'vi',
+                        'User-Agent': 'EV-Taximet-App-V3' 
+                    } 
+                });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                if (data && data.display_name) {
+                    return data.display_name;
+                }
+            } catch (e) {
+                console.error("Lỗi lấy địa chỉ OpenStreetMap:", e);
+            }
+            return `Tọa độ: ${lat.toFixed(5)}, ${lon.toFixed(5)} (Không tải được tên đường)`;
+        }
+
+        function generateInvoiceCode(date) {
+            const d = date || new Date();
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mm = String(d.getMinutes()).padStart(2, '0');
+            const DD = String(d.getDate()).padStart(2, '0');
+            const MM = String(d.getMonth() + 1).padStart(2, '0');
+            const YYYY = d.getFullYear();
+            return `${hh}${mm}/${DD}${MM}/${YYYY}`;
+        }
+
+        function getEffectiveDistance() {
+            let manualVal = 0;
+            const manualInput = document.getElementById('manualAddKm');
+            const banner = document.getElementById('gpsLostBanner');
+            if (banner.style.display === 'block' && manualInput) {
+                manualVal = parseFloat(manualInput.value) || 0;
+            }
+            return totalDistance + manualVal;
+        }
+
+        function calculateRawFare() {
+            if (!isRunning && !hasTripEnded) return 0;
+            const preset = getActivePreset();
+            let fare = preset.baseFare;
+            let effDist = getEffectiveDistance();
+            if (effDist > preset.baseDistanceKm) {
+                fare += (effDist - preset.baseDistanceKm) * preset.ratePerKm;
+            }
+            const totalWaitMins = Math.floor(waitSeconds / 60);
+            const billableWaitMins = Math.max(0, totalWaitMins - preset.freeWaitMins);
+            fare += billableWaitMins * preset.ratePerWaitMin;
+            return Math.round(fare);
+        }
+
+        function calculateSurcharges() {
+            let tollFeeUnit = parseFloat(document.getElementById('tollFee').value) || 0;
+            let extraFeeUnit = parseFloat(document.getElementById('extraFee').value) || 0;
+            return { tollFee: tollFeeUnit * 1000, extraFee: extraFeeUnit * 1000 };
+        }
+
+        function calculateDiscount(baseAndSurcharges) {
+            let discountAmtUnit = parseFloat(document.getElementById('discountAmount').value) || 0;
+            let discountAmt = discountAmtUnit * 1000;
+            let discountPct = parseFloat(document.getElementById('discountPercent').value) || 0;
+            let pctVal = (baseAndSurcharges * discountPct) / 100;
+            return Math.min(baseAndSurcharges, discountAmt + pctVal);
+        }
+
+        function calculateFare() {
+            let raw = calculateRawFare();
+            let surcharges = calculateSurcharges();
+            let subtotal = raw + surcharges.tollFee + surcharges.extraFee;
+            let discount = calculateDiscount(subtotal);
+            return Math.max(0, Math.round(subtotal - discount));
+        }
+
+        function updateDisplay() {
+            let effDist = getEffectiveDistance();
+            document.getElementById('distanceDisplay').innerText = `${effDist.toFixed(2)} km`;
+            document.getElementById('speedDisplay').innerText = `${Math.round(currentSpeedKmh)} km/h`;
+            
+            const waitMins = Math.floor(waitSeconds / 60);
+            const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+            const secs = String(totalSeconds % 60).padStart(2, '0');
+            let timeText = `${mins}:${secs} (${waitMins}m)`;
+            if (isPaused) timeText += " [TẠM DỪNG]";
+            document.getElementById('timeDisplay').innerText = timeText;
+            document.getElementById('fareDisplay').innerText = `${calculateFare().toLocaleString('vi-VN')} đ`;
+        }
+
+        // --- CƠ CHẾ LƯU TẠM THỜI (DRAFT) CHO CHUYẾN ĐI ---
+        function saveTripDraft() {
+            if (!isRunning) {
+                localStorage.removeItem('ev_taximet_active_trip_draft');
+                return;
+            }
+            const draftData = {
+                startTimestamp: startTimestamp ? startTimestamp.getTime() : null,
+                totalSeconds: totalSeconds,
+                waitSeconds: waitSeconds,
+                totalDistance: totalDistance,
+                currentSpeedKmh: currentSpeedKmh,
+                tripLastLat: tripLastLat,
+                tripLastLon: tripLastLon,
+                startCoordsStr: startCoordsStr,
+                currentTripCode: currentTripCode,
+                pausedSecondsTotal: pausedSecondsTotal,
+                isPaused: isPaused,
+                activePresetIndex: config.activePresetIndex
+            };
+            localStorage.setItem('ev_taximet_active_trip_draft', JSON.stringify(draftData));
+        }
+
+        function checkAndRestoreTripDraft() {
+            const savedDraft = localStorage.getItem('ev_taximet_active_trip_draft');
+            if (!savedDraft) return;
+
+            try {
+                const draft = JSON.parse(savedDraft);
+                if (draft && draft.startTimestamp) {
+                    const confirmRestore = confirm("Phát hiện một chuyến đi đang dang dở trước đó. Bạn có muốn khôi phục lại chuyến đi này không?");
+                    if (confirmRestore) {
+                        startTimestamp = new Date(draft.startTimestamp);
+                        totalSeconds = draft.totalSeconds || 0;
+                        waitSeconds = draft.waitSeconds || 0;
+                        totalDistance = draft.totalDistance || 0;
+                        currentSpeedKmh = draft.currentSpeedKmh || 0;
+                        tripLastLat = draft.tripLastLat;
+                        tripLastLon = draft.tripLastLon;
+                        startCoordsStr = draft.startCoordsStr || "";
+                        currentTripCode = draft.currentTripCode || generateInvoiceCode(startTimestamp);
+                        pausedSecondsTotal = draft.pausedSecondsTotal || 0;
+                        isPaused = draft.isPaused || false;
+                        if (draft.activePresetIndex !== undefined) {
+                            config.activePresetIndex = draft.activePresetIndex;
+                            document.getElementById('mainRatePresetSelect').value = config.activePresetIndex;
+                        }
+
+                        isRunning = true;
+                        hasTripEnded = false;
+                        lastGpsTimestamp = Date.now();
+                        lastValidTime = Date.now();
+
+                        requestWakeLock();
+
+                        document.getElementById('btnStart').style.display = 'none';
+                        document.getElementById('btnPause').style.display = 'block';
+                        document.getElementById('btnStop').style.display = 'block';
+                        document.getElementById('btnInvoice').style.display = 'none';
+
+                        if (isPaused) {
+                            document.getElementById('btnPause').innerText = "Tiếp tục chuyến";
+                            document.getElementById('gpsStatusText').innerText = "Đã tạm dừng chuyến đi";
+                        } else {
+                            document.getElementById('gpsStatusText').innerText = "Đã khôi phục chuyến đi...";
+                        }
+
+                        updateDisplay();
+                        startLoopAndWatch();
+                        return;
+                    }
+                }
+            } catch (e) {}
+            localStorage.removeItem('ev_taximet_active_trip_draft');
+        }
+
+        function startTrip() {
+            if (!navigator.geolocation) return alert("Thiết bị không hỗ trợ GPS!");
+
+            isRunning = true;
+            isPaused = false;
+            hasTripEnded = false;
+            totalDistance = 0; totalSeconds = 0; waitSeconds = 0; currentSpeedKmh = 0;
+            pausedSecondsTotal = 0; pauseStartedAt = null;
+            endCoordsStr = "";
+            lastValidLat = null; lastValidLon = null; lastValidTime = null;
+            kalmanState = { lat: null, lon: null, variance: 1.0 };
+            currentEditingTripIndex = null;
+            isBatchInvoiceMode = false;
+
+            const manualInput = document.getElementById('manualAddKm');
+            if (manualInput) manualInput.value = "1";
+            document.getElementById('gpsLostBanner').style.display = 'none';
+
+            startTimestamp = new Date();
+            currentTripCode = generateInvoiceCode(startTimestamp);
+
+            if (globalLat !== null && globalLon !== null) {
+                startCoordsStr = `${globalLat.toFixed(5)}, ${globalLon.toFixed(5)}`;
+                tripLastLat = globalLat;
+                tripLastLon = globalLon;
+                lastValidLat = globalLat;
+                lastValidLon = globalLon;
+                lastValidTime = Date.now();
+            } else {
+                startCoordsStr = "Đang xác định...";
+                tripLastLat = null;
+                tripLastLon = null;
+            }
+
+            lastGpsTimestamp = Date.now();
+            requestWakeLock();
+
+            document.getElementById('gpsStatusText').innerText = "Đang ghi nhận chuyến đi...";
+            document.getElementById('btnStart').style.display = 'none';
+            document.getElementById('btnPause').style.display = 'block';
+            document.getElementById('btnStop').style.display = 'block';
+            document.getElementById('btnInvoice').style.display = 'none';
+            
+            document.getElementById('tollFee').value = "";
+            document.getElementById('extraFee').value = "";
+            document.getElementById('discountAmount').value = "";
+            document.getElementById('discountPercent').value = "";
+            document.getElementById('customerName').value = "";
+            document.getElementById('unpaidCheckbox').checked = false;
+
+            updateDisplay();
+            saveTripDraft();
+            startLoopAndWatch();
+        }
+
+        function startLoopAndWatch() {
+            if (timerId) clearInterval(timerId);
+            timerId = setInterval(() => {
+                if (!isPaused) {
+                    totalSeconds = Math.floor((Date.now() - startTimestamp.getTime()) / 1000) - Math.floor(pausedSecondsTotal || 0);
+                    
+                    const timeSinceLastGps = Date.now() - lastGpsTimestamp;
+                    if (timeSinceLastGps > 10000) {
+                        document.getElementById('gpsLostBanner').style.display = 'flex';
+                    } else {
+                        document.getElementById('gpsLostBanner').style.display = 'none';
+                    }
+
+                    if (lastValidTime && (Date.now() - lastValidTime > 7000)) {
+                        document.getElementById('gpsStatusText').innerText = "Mất GPS, đang nội suy quán tính...";
+                        if (currentSpeedKmh > 5 && tripLastLat !== null && tripLastLon !== null) {
+                            let estimatedDistPerSec = (currentSpeedKmh / 3600);
+                            totalDistance += estimatedDistPerSec;
+                        }
+                    }
+
+                    if (currentSpeedKmh < 3) waitSeconds += 1;
+                    updateDisplay();
+                    saveTripDraft();
+                }
+            }, 1000);
+
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+            watchId = navigator.geolocation.watchPosition((pos2) => {
+                if (isPaused || !isRunning) return;
+
+                const { latitude: rawLat, longitude: rawLon, speed: speedMps, accuracy } = pos2.coords;
+                const currentTime = Date.now();
+
+                lastGpsTimestamp = currentTime;
+                document.getElementById('gpsLostBanner').style.display = 'none';
+
+                const filtered = kalmanFilterUpdate(rawLat, rawLon, accuracy || 10);
+                const lat2 = filtered.lat;
+                const lon2 = filtered.lon;
+
+                if (startCoordsStr === "Đang xác định...") {
+                    startCoordsStr = `${lat2.toFixed(5)}, ${lon2.toFixed(5)}`;
+                }
+
+                document.getElementById('liveCoords').innerText = `Tọa độ: ${lat2.toFixed(5)}, ${lon2.toFixed(5)}`;
+                document.getElementById('gpsStatusText').innerText = "Đang ghi nhận chuyến đi...";
+
+                if (speedMps !== null && !isNaN(speedMps) && speedMps >= 0) {
+                    currentSpeedKmh = speedMps * 3.6;
+                } else if (tripLastLat !== null && tripLastLon !== null) {
+                    const d = calcDistance(tripLastLat, tripLastLon, lat2, lon2);
+                    currentSpeedKmh = (d / (1 / 3600)); 
+                }
+
+                if (tripLastLat !== null && tripLastLon !== null) {
+                    const dist = calcDistance(tripLastLat, tripLastLon, lat2, lon2);
+                    if (dist >= 0.003) {
+                        totalDistance += dist;
+                    }
+                    tripLastLat = lat2;
+                    tripLastLon = lon2;
+                } else {
+                    tripLastLat = lat2;
+                    tripLastLon = lon2;
+                }
+
+                lastValidLat = lat2;
+                lastValidLon = lon2;
+                lastValidTime = currentTime;
+
+                updateDisplay();
+                saveTripDraft();
+            }, (err) => {
+                document.getElementById('gpsStatusText').innerText = "Tín hiệu GPS yếu / Mất kết nối...";
+            }, { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 });
+        }
+
+        function togglePauseTrip() {
+            const btnPause = document.getElementById('btnPause');
+            if (!isPaused) {
+                isPaused = true;
+                pauseStartedAt = Date.now();
+                currentSpeedKmh = 0;
+                btnPause.innerText = "Tiếp tục chuyến";
+                document.getElementById('gpsStatusText').innerText = "Đã tạm dừng chuyến đi";
+                document.getElementById('gpsLostBanner').style.display = 'none';
+            } else {
+                isPaused = false;
+                if (pauseStartedAt) pausedSecondsTotal += (Date.now() - pauseStartedAt) / 1000;
+                btnPause.innerText = "Tạm dừng";
+                document.getElementById('gpsStatusText').innerText = "Đang ghi nhận chuyến đi...";
+                lastValidTime = Date.now();
+                lastGpsTimestamp = Date.now();
+            }
+            updateDisplay();
+            saveTripDraft();
+        }
+
+        function saveTripToHistory() {
+            try {
+                let history = JSON.parse(localStorage.getItem('ev_taximet_history') || '[]');
+                const isUnpaid = document.getElementById('unpaidCheckbox').checked;
+                const custName = document.getElementById('customerName').value.trim();
+
+                const tripData = {
+                    code: currentTripCode,
+                    startTime: startTimestamp ? startTimestamp.toISOString() : null,
+                    endTime: endTimestamp ? endTimestamp.toISOString() : null,
+                    startCoords: startCoordsStr,
+                    endCoords: endCoordsStr,
+                    distance: getEffectiveDistance().toFixed(2),
+                    waitSeconds: waitSeconds,
+                    fare: calculateFare(),
+                    customerName: custName,
+                    isUnpaid: isUnpaid
+                };
+
+                if (currentEditingTripIndex !== null && history[currentEditingTripIndex]) {
+                    history[currentEditingTripIndex] = tripData;
+                } else {
+                    history.unshift(tripData);
+                }
+
+                const nowMs = Date.now();
+                const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+                history = history.filter(item => {
+                    if (!item.startTime) return false;
+                    const itemTime = new Date(item.startTime).getTime();
+                    return (nowMs - itemTime) <= thirtyDaysMs;
+                });
+
+                localStorage.setItem('ev_taximet_history', JSON.stringify(history));
+                localStorage.removeItem('ev_taximet_active_trip_draft');
+            } catch (e) {}
+        }
+
+        function stopTrip() {
+            if (!isRunning) return;
+            
+            isRunning = false;
+            isPaused = false;
+            hasTripEnded = true;
+            currentSpeedKmh = 0;
+            endTimestamp = new Date();
+            clearInterval(timerId);
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+
+            releaseWakeLock();
+            document.getElementById('gpsLostBanner').style.display = 'none';
+
+            const manualInput = document.getElementById('manualAddKm');
+            if (manualInput) manualInput.value = "1";
+
+            if (tripLastLat !== null && tripLastLon !== null) {
+                endCoordsStr = `${tripLastLat.toFixed(5)}, ${tripLastLon.toFixed(5)}`;
+            } else {
+                endCoordsStr = startCoordsStr;
+            }
+
+            saveTripToHistory();
+
+            document.getElementById('gpsStatusText').innerText = "Đã hoàn thành chuyến đi";
+            document.getElementById('btnStop').style.display = 'none';
+            document.getElementById('btnPause').style.display = 'none';
+            document.getElementById('btnStart').style.display = 'block';
+            document.getElementById('btnInvoice').style.display = 'block';
+            
+            updateDisplay();
+        }
+
+        function openHistory() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            if(!document.getElementById('historyDateStart').value) document.getElementById('historyDateStart').value = todayStr;
+            if(!document.getElementById('historyDateEnd').value) document.getElementById('historyDateEnd').value = todayStr;
+
+            setRevFilter('today');
+            document.getElementById('historyModal').style.display = 'flex';
+        }
+
+        function closeHistory() {
+            document.getElementById('historyModal').style.display = 'none';
+        }
+
+        function setRevFilter(type) {
+            currentRevFilter = type;
+            document.getElementById('filterTabToday').classList.remove('active');
+            document.getElementById('filterTab7Days').classList.remove('active');
+            document.getElementById('filterTab30Days').classList.remove('active');
+            document.getElementById('filterTabCustom').classList.remove('active');
+
+            if (type === 'today') document.getElementById('filterTabToday').classList.add('active');
+            if (type === '7days') document.getElementById('filterTab7Days').classList.add('active');
+            if (type === '30days') document.getElementById('filterTab30Days').classList.add('active');
+            if (type === 'custom') document.getElementById('filterTabCustom').classList.add('active');
+
+            const customBox = document.getElementById('customDateRangeBox');
+            customBox.style.display = (type === 'custom') ? 'grid' : 'none';
+
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('historyListContainer');
+            let history = JSON.parse(localStorage.getItem('ev_taximet_history') || '[]');
+            
+            const nowMs = Date.now();
+            const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+            history = history.filter(item => {
+                if (!item.startTime) return false;
+                return (nowMs - new Date(item.startTime).getTime()) <= thirtyDaysMs;
+            });
+            localStorage.setItem('ev_taximet_history', JSON.stringify(history));
+
+            const now = new Date();
+            const filtered = history.filter(item => {
+                if (!item.startTime) return false;
+                const itemDate = new Date(item.startTime);
+
+                if (currentRevFilter === 'today') {
+                    return itemDate.toDateString() === now.toDateString();
+                } else if (currentRevFilter === '7days') {
+                    const past7Days = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+                    return itemDate >= past7Days && itemDate <= now;
+                } else if (currentRevFilter === '30days') {
+                    const past30Days = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+                    return itemDate >= past30Days && itemDate <= now;
+                } else if (currentRevFilter === 'custom') {
+                    const startVal = document.getElementById('historyDateStart').value;
+                    const endVal = document.getElementById('historyDateEnd').value;
+                    if (!startVal || !endVal) return true;
+                    
+                    const startDate = new Date(startVal);
+                    startDate.setHours(0,0,0,0);
+                    const endDate = new Date(endVal);
+                    endDate.setHours(23,59,59,999);
+                    
+                    return itemDate >= startDate && itemDate <= endDate;
+                }
+                return true;
+            });
+
+            let totalFilteredFare = 0;
+            let totalFilteredDist = 0;
+            filtered.forEach(item => { 
+                totalFilteredFare += (Number(item.fare) || 0); 
+                totalFilteredDist += (parseFloat(item.distance) || 0);
+            });
+
+            document.getElementById('summaryTotalTrips').innerText = `${filtered.length} chuyến`;
+            document.getElementById('summaryTotalDist').innerText = `${totalFilteredDist.toFixed(2)} km`;
+            document.getElementById('summaryTotalRevenue').innerText = `${totalFilteredFare.toLocaleString('vi-VN')} đ`;
+
+            batchSelectedIndices = [];
+            document.getElementById('selectAllUnpaid').checked = false;
+            document.getElementById('btnBatchInvoice').style.display = 'none';
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #888; padding: 20px 0; font-size: 13px;">Chưa có chuyến đi nào được lưu trong hệ thống (Tối đa 30 ngày).</div>';
+                return;
+            }
+
+            container.innerHTML = filtered.map((item) => {
+                const realIndex = history.findIndex(h => h.code === item.code && h.startTime === item.startTime);
+                const dateStr = item.startTime ? new Date(item.startTime).toLocaleString('vi-VN') : '--';
+                
+                const isUnpaid = item.isUnpaid === true;
+                const statusColor = isUnpaid ? '#ef4444' : '#10b981';
+                const statusBadgeText = isUnpaid ? ' [Chưa thanh toán]' : '';
+                const customerDisplay = item.customerName ? ` - ${item.customerName}` : '';
+
+                const checkboxHtml = isUnpaid 
+                    ? `<input type="checkbox" class="history-checkbox" value="${realIndex}" onclick="onHistoryCheckboxChange(event, ${realIndex})">`
+                    : `<div style="width: 18px;"></div>`;
+
+                return `
+                    <div class="history-item" onclick="viewHistoryInvoice(${realIndex})" style="border-left: 4px solid ${statusColor};">
+                        <div class="history-left">
+                            ${checkboxHtml}
+                            <div class="history-info">
+                                <div class="history-code" style="color: ${statusColor};">${item.code}${customerDisplay}</div>
+                                <div class="history-time">${dateStr}${statusBadgeText}</div>
+                            </div>
+                        </div>
+                        <div class="history-right">
+                            <div class="history-fare" style="color: ${statusColor};">${Number(item.fare).toLocaleString('vi-VN')} đ</div>
+                            <div class="history-dist">${item.distance} km</div>
+                        </div>
+                        <button class="btn-delete-trip" onclick="deleteHistoryItem(event, ${realIndex})" title="Xóa">🗑️</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function onHistoryCheckboxChange(event, realIndex) {
+            event.stopPropagation();
+            const chk = event.target;
+            if (chk.checked) {
+                if (!batchSelectedIndices.includes(realIndex)) batchSelectedIndices.push(realIndex);
+            } else {
+                batchSelectedIndices = batchSelectedIndices.filter(i => i !== realIndex);
+                document.getElementById('selectAllUnpaid').checked = false;
+            }
+            updateBatchButtonState();
+        }
+
+        function toggleSelectAllUnpaid(masterChk) {
+            const checkboxes = document.querySelectorAll('.history-checkbox');
+            batchSelectedIndices = [];
+            checkboxes.forEach(chk => {
+                chk.checked = masterChk.checked;
+                if (masterChk.checked) {
+                    batchSelectedIndices.push(parseInt(chk.value));
+                }
+            });
+            updateBatchButtonState();
+        }
+
+        function updateBatchButtonState() {
+            const btn = document.getElementById('btnBatchInvoice');
+            if (batchSelectedIndices.length > 0) {
+                btn.style.display = 'block';
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+
+        function viewHistoryInvoice(index) {
+            const history = JSON.parse(localStorage.getItem('ev_taximet_history') || '[]');
+            const item = history[index];
+            if (!item) return;
+
+            isBatchInvoiceMode = false;
+            currentEditingTripIndex = index;
+            currentTripCode = item.code;
+            totalDistance = parseFloat(item.distance) || 0;
+            waitSeconds = parseInt(item.waitSeconds) || 0;
+            startCoordsStr = item.startCoords || "--";
+            endCoordsStr = item.endCoords || "--";
+            startTimestamp = item.startTime ? new Date(item.startTime) : null;
+            endTimestamp = item.endTime ? new Date(item.endTime) : null;
+            hasTripEnded = true;
+
+            document.getElementById('customerName').value = item.customerName || "";
+            document.getElementById('unpaidCheckbox').checked = item.isUnpaid === true;
+
+            closeHistory();
+            showInvoice();
+        }
+
+        function exportBatchInvoice() {
+            if (batchSelectedIndices.length === 0) return alert("Vui lòng chọn ít nhất 1 hóa đơn chưa thanh toán!");
+            isBatchInvoiceMode = true;
+            closeHistory();
+            showInvoice();
+        }
+
+        function deleteHistoryItem(event, index) {
+            event.stopPropagation();
+            if (confirm("Xóa chuyến đi này khỏi lịch sử?")) {
+                let history = JSON.parse(localStorage.getItem('ev_taximet_history') || '[]');
+                history.splice(index, 1);
+                localStorage.setItem('ev_taximet_history', JSON.stringify(history));
+                renderHistory();
+            }
+        }
+
+        function clearAllHistory() {
+            if (confirm("Xóa TOÀN BỘ lịch sử chuyến đi?")) {
+                localStorage.removeItem('ev_taximet_history');
+                renderHistory();
+            }
+        }
+
+        function toggleUnpaidStatus() {
+            updateInvoiceCalculations();
+        }
+
+        async function updateInvoiceCalculations() {
+            const langCode = document.getElementById('invoiceLangSelect').value || 'vi';
+            const t = translations[langCode];
+
+            document.getElementById('lblInvTitle').innerText = t.title;
+            document.getElementById('lblDriver').innerText = t.driver;
+            document.getElementById('lblCarPlate').innerText = t.carPlate;
+            document.getElementById('lblCustomer').innerText = t.customer;
+            document.getElementById('lblPickup').innerText = t.pickup;
+            document.getElementById('lblDropoff').innerText = t.dropoff;
+            document.getElementById('lblStart').innerText = t.start;
+            document.getElementById('lblEnd').innerText = t.end;
+            document.getElementById('lblColDetail').innerText = t.colDetail;
+            document.getElementById('lblColAmount').innerText = t.colAmount;
+            document.getElementById('lblBaseFareText').innerText = t.baseFare;
+            document.getElementById('lblExtraKmText').innerText = t.extraKm;
+            document.getElementById('lblWaitText').innerText = t.wait;
+            document.getElementById('lblTollText').innerText = t.toll;
+            document.getElementById('lblExtraFeeText').innerText = t.extraFee;
+            document.getElementById('invDiscountLabel').innerText = t.discount;
+            document.getElementById('lblTotalFare').innerText = t.total;
+            document.getElementById('lblScanQR').innerText = t.scanQR;
+
+            let finalBatchTotal = 0;
+
+            if (isBatchInvoiceMode) {
+                document.getElementById('modalInvoiceTitle').innerText = "Hóa đơn tổng hợp chưa thanh toán";
+                document.getElementById('singleInvoiceConfigBox').style.display = 'none';
+                document.getElementById('singleRouteInfoContainer').style.display = 'none';
+                document.getElementById('singleTimeInfoContainer').style.display = 'none';
+                document.getElementById('singleInvoiceTable').style.display = 'none';
+                
+                const batchTable = document.getElementById('batchInvoiceTable');
+                batchTable.style.display = 'table';
+
+                const history = JSON.parse(localStorage.getItem('ev_taximet_history') || '[]');
+                let batchHtml = '';
+                
+                for (let idx of batchSelectedIndices) {
+                    const trip = history[idx];
+                    if (trip) {
+                        const tripFare = Number(trip.fare) || 0;
+                        finalBatchTotal += tripFare;
+                        const tripDate = trip.startTime ? new Date(trip.startTime).toLocaleString('vi-VN', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'}) : '--';
+                        
+                        let sLat = null, sLon = null, eLat = null, eLon = null;
+                        if (trip.startCoords && trip.startCoords.includes(',')) {
+                            const p = trip.startCoords.split(',');
+                            sLat = parseFloat(p[0].trim()); sLon = parseFloat(p[1].trim());
+                        }
+                        if (trip.endCoords && trip.endCoords.includes(',')) {
+                            const p = trip.endCoords.split(',');
+                            eLat = parseFloat(p[0].trim()); eLon = parseFloat(p[1].trim());
+                        }
+
+                        const pickupAddr = await getOpenStreetMapAddress(sLat, sLon);
+                        await new Promise(resolve => setTimeout(resolve, 1100)); // Rate limit buffer (1 request / sec)
+                        const dropoffAddr = await getOpenStreetMapAddress(eLat, eLon);
+                        await new Promise(resolve => setTimeout(resolve, 1100)); // Rate limit buffer
+
+                        const waitMins = Math.floor((parseInt(trip.waitSeconds) || 0) / 60);
+                        const waitFeeText = waitMins > 0 ? ` • Phí chờ: ${waitMins}m` : '';
+
+                        batchHtml += `
+                            <tr>
+                                <td style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                    <div style="font-weight: 800; color: #ff9800; margin-bottom: 2px;">${trip.code} (${tripDate})</div>
+                                    <div style="font-size: 10px; color: #aaa; line-height: 1.3;">📍 Đón: ${pickupAddr}</div>
+                                    <div style="font-size: 10px; color: #aaa; line-height: 1.3; margin-top: 1px;">🏁 Trả: ${dropoffAddr}</div>
+                                    <div style="font-size: 10px; color: #38bdf8; margin-top: 2px; font-weight: 700;">📏 Tổng khoảng cách: ${trip.distance} km${waitFeeText}</div>
+                                </td>
+                                <td class="num" style="vertical-align: top; padding-top: 10px;">${tripFare.toLocaleString('vi-VN')} đ</td>
+                            </tr>
+                        `;
+                    }
+                }
+                document.getElementById('batchTableBody').innerHTML = batchHtml;
+                document.getElementById('invTripCode').innerText = `MÃ TỔNG HỢP: ${batchSelectedIndices.length} CHUYẾN`;
+                document.getElementById('invFare').innerText = `${finalBatchTotal.toLocaleString('vi-VN')} đ`;
+
+                document.getElementById('qrContainerBox').style.display = 'flex';
+                document.getElementById('btnSaveTrip').style.display = 'none';
+                document.getElementById('actionButtonsNormal').style.display = 'grid';
+
+                document.getElementById('qrAmountText').innerText = `${finalBatchTotal.toLocaleString('vi-VN')} đ`;
+                const addInfo = encodeURIComponent(`THANH TOAN TONG ${batchSelectedIndices.length} CHUYEN`);
+                const qrUrl = `https://img.vietqr.io/image/${config.bankId}-${config.accountNo}-compact2.png?amount=${finalBatchTotal}&addInfo=${addInfo}&accountName=${encodeURIComponent(config.accountName)}`;
+                document.getElementById('qrImage').src = qrUrl;
+
+            } else {
+                document.getElementById('modalInvoiceTitle').innerText = "Hóa đơn chuyến đi";
+                document.getElementById('singleInvoiceConfigBox').style.display = 'flex';
+                document.getElementById('singleRouteInfoContainer').style.display = 'flex';
+                document.getElementById('singleTimeInfoContainer').style.display = 'flex';
+                document.getElementById('singleInvoiceTable').style.display = 'table';
+                document.getElementById('batchInvoiceTable').style.display = 'none';
+
+                document.getElementById('invTripCode').innerText = `${t.tripCode} ${currentTripCode}`;
+
+                const custNameVal = document.getElementById('customerName').value.trim();
+                const customerRow = document.getElementById('invCustomerRow');
+                if (custNameVal) {
+                    customerRow.style.display = 'flex';
+                    document.getElementById('invCustomerNameVal').innerText = custNameVal;
+                } else {
+                    customerRow.style.display = 'none';
+                }
+
+                const preset = getActivePreset();
+                const effDist = getEffectiveDistance();
+                const raw = calculateRawFare();
+                const extraKm = effDist > preset.baseDistanceKm ? (effDist - preset.baseDistanceKm) : 0;
+                const extraFare = Math.round(extraKm * preset.ratePerKm);
+                
+                const totalWaitMins = Math.floor(waitSeconds / 60);
+                const billableWaitMins = Math.max(0, totalWaitMins - preset.freeWaitMins);
+                const waitFare = billableWaitMins * preset.ratePerWaitMin;
+
+                const surcharges = calculateSurcharges();
+                const subtotal = raw + surcharges.tollFee + surcharges.extraFee;
+
+                const discountAmtUnit = parseFloat(document.getElementById('discountAmount').value) || 0;
+                const discountAmt = discountAmtUnit * 1000;
+                const discountPct = parseFloat(document.getElementById('discountPercent').value) || 0;
+                const totalDiscount = calculateDiscount(subtotal);
+                const fare = Math.max(0, Math.round(subtotal - totalDiscount));
+
+                document.getElementById('invBaseDist').innerText = preset.baseDistanceKm.toFixed(1);
+                document.getElementById('invBaseFare').innerText = `${preset.baseFare.toLocaleString('vi-VN')} đ`;
+                document.getElementById('invExtraKm').innerText = extraKm.toFixed(2);
+                document.getElementById('invExtraFare').innerText = `${extraFare.toLocaleString('vi-VN')} đ`;
+                document.getElementById('invWaitMins').innerText = billableWaitMins;
+                document.getElementById('invWaitFare').innerText = `${waitFare.toLocaleString('vi-VN')} đ`;
+
+                document.getElementById('invTollRow').style.display = surcharges.tollFee > 0 ? 'flex' : 'none';
+                if (surcharges.tollFee > 0) document.getElementById('invTollFare').innerText = `+${surcharges.tollFee.toLocaleString('vi-VN')} đ`;
+
+                document.getElementById('invExtraFeeRow').style.display = surcharges.extraFee > 0 ? 'flex' : 'none';
+                if (surcharges.extraFee > 0) document.getElementById('invExtraFeeVal').innerText = `+${surcharges.extraFee.toLocaleString('vi-VN')} đ`;
+
+                if (totalDiscount > 0) {
+                    document.getElementById('invDiscountRow').style.display = 'flex';
+                    document.getElementById('invDiscountVal').innerText = `-${Math.round(totalDiscount).toLocaleString('vi-VN')} đ`;
+                } else {
+                    document.getElementById('invDiscountRow').style.display = 'none';
+                }
+
+                document.getElementById('invFare').innerText = `${fare.toLocaleString('vi-VN')} đ`;
+
+                const isUnpaid = document.getElementById('unpaidCheckbox').checked;
+                const qrContainerBox = document.getElementById('qrContainerBox');
+                const btnSaveTrip = document.getElementById('btnSaveTrip');
+                const actionButtonsNormal = document.getElementById('actionButtonsNormal');
+
+                if (isUnpaid) {
+                    qrContainerBox.style.display = 'none';
+                    btnSaveTrip.style.display = 'block';
+                    actionButtonsNormal.style.display = 'none';
+                } else {
+                    qrContainerBox.style.display = 'flex';
+                    btnSaveTrip.style.display = 'none';
+                    actionButtonsNormal.style.display = 'grid';
+
+                    document.getElementById('qrAmountText').innerText = `${fare.toLocaleString('vi-VN')} đ`;
+                    const addInfo = encodeURIComponent(`CUOC TAXI ${currentTripCode}`);
+                    const qrUrl = `https://img.vietqr.io/image/${config.bankId}-${config.accountNo}-compact2.png?amount=${fare}&addInfo=${addInfo}&accountName=${encodeURIComponent(config.accountName)}`;
+                    document.getElementById('qrImage').src = qrUrl;
+                }
+            }
+
+            updateDisplay();
+        }
+
+        function saveAndCloseInvoice() {
+            saveTripToHistory();
+            closeInvoice();
+        }
+
+        async function showInvoice() {
+            document.getElementById('invDriverName').innerText = config.driverName || "Chưa nhập";
+            document.getElementById('invCarPlate').innerText = config.carPlate || "Chưa nhập";
+
+            const selectedBankText = document.getElementById('bankId').options[document.getElementById('bankId').selectedIndex].text;
+            document.getElementById('qrBankText').innerText = selectedBankText.split(' (')[0];
+            document.getElementById('qrAccText').innerText = config.accountNo;
+            document.getElementById('qrNameText').innerText = config.accountName;
+
+            await updateInvoiceCalculations();
+            document.getElementById('invoiceModal').style.display = 'flex';
+
+            if (!isBatchInvoiceMode) {
+                document.getElementById('invPickupCoords').innerText = startCoordsStr || "--";
+                document.getElementById('invDropoffCoords').innerText = endCoordsStr || "--";
+
+                document.getElementById('invStartTime').innerText = startTimestamp ? startTimestamp.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) : '--';
+                document.getElementById('invEndTime').innerText = endTimestamp ? endTimestamp.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) : '--';
+
+                let startLat = null, startLon = null, endLat = null, endLon = null;
+                if (startCoordsStr && startCoordsStr.includes(',')) {
+                    const parts = startCoordsStr.split(',');
+                    startLat = parseFloat(parts[0].trim());
+                    startLon = parseFloat(parts[1].trim());
+                }
+                if (endCoordsStr && endCoordsStr.includes(',')) {
+                    const parts = endCoordsStr.split(',');
+                    endLat = parseFloat(parts[0].trim());
+                    endLon = parseFloat(parts[1].trim());
+                }
+
+                const [pickupAddress, dropoffAddress] = await Promise.all([
+                    getOpenStreetMapAddress(startLat, startLon),
+                    getOpenStreetMapAddress(endLat, endLon)
+                ]);
+
+                document.getElementById('invPickupCoords').innerText = pickupAddress;
+                document.getElementById('invDropoffCoords').innerText = dropoffAddress;
+            } else {
+                let history = JSON.parse(localStorage.getItem('ev_taximet_history') || '[]');
+                batchSelectedIndices.forEach(idx => {
+                    if (history[idx]) {
+                        history[idx].isUnpaid = false;
+                    }
+                });
+                localStorage.setItem('ev_taximet_history', JSON.stringify(history));
+            }
+        }
+
+        function openZoomQR() {
+            const currentQrSrc = document.getElementById('qrImage').src;
+            if(!currentQrSrc) return;
+            document.getElementById('qrZoomImage').src = currentQrSrc;
+            document.getElementById('qrZoomModal').style.display = 'flex';
+        }
+
+        function closeZoomQR() { document.getElementById('qrZoomModal').style.display = 'none'; }
+
+        function exportPDF() {
+            const safeTripCode = (currentTripCode || "0000").replace(/[\/\\:]/g, '-');
+            const oldTitle = document.title;
+            document.title = `Hoá đơn - ${safeTripCode}`;
+            window.print();
+            setTimeout(() => {
+                document.title = oldTitle;
+            }, 1000);
+        }
+
+        async function shareInvoiceImage() {
+            const invoiceArea = document.getElementById('printableArea');
+            try {
+                const canvas = await html2canvas(invoiceArea, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#181818' });
+                canvas.toBlob(async (blob) => {
+                    const safeTripCode = (currentTripCode || "0000").replace(/[\/\\:]/g, '-');
+                    const fileName = `Hoá đơn - ${safeTripCode}.png`;
+                    
+                    const file = new File([blob], fileName, { type: 'image/png' });
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({ title: `Hóa đơn Taxi ${currentTripCode}`, files: [file] });
+                    } else {
+                        const link = document.createElement('a');
+                        link.download = fileName;
+                        link.href = canvas.toDataURL();
+                        link.click();
+                    }
+                }, 'image/png');
+            } catch (err) { 
+                alert("Lỗi khi tạo ảnh hóa đơn!"); 
+            }
+        }
+
+        function closeInvoice() { document.getElementById('invoiceModal').style.display = 'none'; }
+        function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
+        function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
+
+        function saveSettings() {
+            saveCurrentTabFieldsToConfig();
+
+            config.driverName = document.getElementById('driverName').value.trim();
+            config.carPlate = document.getElementById('carPlate').value.trim();
+            config.bankId = document.getElementById('bankId').value;
+            config.accountNo = document.getElementById('accountNo').value.trim();
+            config.accountName = document.getElementById('accountName').value.trim();
+
+            localStorage.setItem('ev_taximet_config_v3', JSON.stringify(config));
+            document.getElementById('headerSubDetails').innerText = `${config.driverName || 'Tài xế'} • ${config.carPlate || 'Biển số'}`;
+            
+            renderMainPresetSelect();
+            closeSettings();
+            updateDisplay();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            checkAndRestoreTripDraft();
+        });
+    </script>
+</body>
+</html>
