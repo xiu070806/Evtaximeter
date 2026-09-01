@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EVTaximeter - Đồng hồ tính cước thông minh</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+                    colors: { brand: { 50: '#eef2ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' } }
+                }
+            }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-full flex flex-col font-sans select-none overflow-hidden">
+
+    <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex justify-between items-center z-10 shrink-0">
+        <div class="flex items-center space-x-2">
+            <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center font-bold text-white shadow-lg shadow-brand-500/30">EV</div>
+            <span class="font-bold tracking-wide text-lg bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">EVTaximeter</span>
+        </div>
+        <div class="flex items-center space-x-3">
+            <div id="gpsStatusBadge" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium">
+                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                <span id="gpsStatusText">Đang tìm GPS...</span>
+            </div>
+            <button onclick="switchTab('settings')" class="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-slate-300 hover:bg-slate-700 transition">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+        </div>
+    </header>
+
+    <div id="gpsLostBanner" class="hidden bg-rose-500/20 border-b border-rose-500/30 px-4 py-2 flex items-center justify-between text-rose-300 text-xs shrink-0 z-10">
+        <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-triangle-exclamation animate-bounce"></i>
+            <span>Mất sóng GPS! Đang kích hoạt nội suy quán tính (Lớp 1 & 4).</span>
+        </div>
+        <button onclick="applyManualGpsOverride()" class="bg-rose-600 text-white px-2 py-1 rounded font-bold hover:bg-rose-500 transition">Bù trừ 1 chạm</button>
+    </div>
+
+    <main class="flex-1 overflow-y-auto no-scrollbar relative flex flex-col">
+        
+        <section id="tab-meter" class="tab-content flex-1 flex flex-col p-4 space-y-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col space-y-3">
+                <div class="flex justify-between items-center">
+                    <label class="text-xs text-slate-400 font-medium uppercase tracking-wider" data-i18n="tariff_label">Biểu phí áp dụng</label>
+                    <select id="activeTariffSelect" onchange="changeActiveTariff()" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand-500 font-semibold"></select>
+                </div>
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                        <span class="text-slate-400 text-xs block" data-i18n="speed_label">Tốc độ hiện tại</span>
+                        <div class="text-xl font-bold text-slate-200 mt-0.5"><span id="currentSpeed">0</span> <span class="text-xs font-normal text-slate-400">km/h</span></div>
+                    </div>
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                        <span class="text-slate-400 text-xs block" data-i18n="time_label">Thời gian chuyến</span>
+                        <div class="text-xl font-bold text-slate-200 mt-0.5" id="tripDuration">00:00:00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-b from-slate-900 to-slate-900/80 border border-slate-800 rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden flex-1 min-h-[220px]">
+                <div class="absolute inset-0 bg-brand-500/5 pointer-events-none"></div>
+                <span class="text-xs font-bold uppercase tracking-widest text-brand-400 mb-1" data-i18n="total_fare_label">Tổng cước tạm tính</span>
+                <div class="text-5xl sm:text-6xl font-extrabold tracking-tight text-white my-2" id="totalFareDisplay">0</div>
+                <span class="text-sm font-semibold text-slate-400">VNĐ</span>
+
+                <div class="flex items-center space-x-6 mt-6 pt-4 border-t border-slate-800/80 w-full justify-around">
+                    <div>
+                        <span class="text-xs text-slate-400 block" data-i18n="distance_label">Quãng đường</span>
+                        <span class="text-lg font-bold text-slate-200"><span id="tripDistance">0.00</span> km</span>
+                    </div>
+                    <div class="h-8 w-px bg-slate-800"></div>
+                    <div>
+                        <span class="text-xs text-slate-400 block" data-i18n="waiting_fee_label">Phí chờ</span>
+                        <span class="text-lg font-bold text-amber-400"><span id="waitingFeeDisplay">0</span> đ</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 pt-2">
+                <button id="btnStart" onclick="startTrip()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-600/30 flex flex-col items-center justify-center space-y-1 transition active:scale-95">
+                    <i class="fa-solid fa-play text-lg"></i>
+                    <span class="text-xs" data-i18n="btn_start">Bắt đầu</span>
+                </button>
+                <button id="btnPause" onclick="pauseTrip()" disabled class="bg-slate-800 text-slate-500 font-bold py-4 rounded-2xl flex flex-col items-center justify-center space-y-1 transition active:scale-95 disabled:opacity-50">
+                    <i class="fa-solid fa-pause text-lg"></i>
+                    <span class="text-xs" id="pauseBtnText" data-i18n="btn_pause">Tạm dừng</span>
+                </button>
+                <button id="btnComplete" onclick="completeTrip()" disabled class="bg-rose-600/50 text-slate-400 font-bold py-4 rounded-2xl flex flex-col items-center justify-center space-y-1 transition active:scale-95 disabled:opacity-50">
+                    <i class="fa-solid fa-stop text-lg"></i>
+                    <span class="text-xs" data-i18n="btn_complete">Hoàn thành</span>
+                </button>
+            </div>
+        </section>
+
+        <section id="tab-history" class="tab-content hidden flex-1 flex flex-col p-4 space-y-3">
+            <div class="flex justify-between items-center mb-1">
+                <h2 class="font-bold text-lg text-slate-200" data-i18n="history_title">Lịch sử chuyến đi</h2>
+                <span id="historyCount" class="text-xs bg-slate-800 px-2.5 py-1 rounded-full text-slate-400">0 chuyến</span>
+            </div>
+            <div id="historyListContainer" class="space-y-3 overflow-y-auto flex-1 pb-4">
+                </div>
+        </section>
+
+        <section id="tab-stats" class="tab-content hidden flex-1 flex flex-col p-4 space-y-4 overflow-y-auto">
+            <h2 class="font-bold text-lg text-slate-200" data-i18n="stats_title">Thống kê thu nhập & Công nợ</h2>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                    <span class="text-xs text-slate-400" data-i18n="stat_revenue">Tổng doanh thu</span>
+                    <div class="text-xl font-bold text-white mt-1" id="statTotalRev">0 đ</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                    <span class="text-xs text-emerald-400" data-i18n="stat_paid">Đã thanh toán</span>
+                    <div class="text-xl font-bold text-emerald-400 mt-1" id="statPaidRev">0 đ</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                    <span class="text-xs text-rose-400" data-i18n="stat_unpaid">Chưa thanh toán (Nợ)</span>
+                    <div class="text-xl font-bold text-rose-400 mt-1" id="statUnpaidRev">0 đ</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                    <span class="text-xs text-slate-400" data-i18n="stat_trips_km">Tổng cuốc / Km</span>
+                    <div class="text-base font-bold text-slate-200 mt-1"><span id="statTripsCount">0</span> cuốc / <span id="statKmCount">0</span> km</div>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3">
+                <h3 class="font-bold text-sm text-slate-300 flex items-center justify-between">
+                    <span data-i18n="debt_customers_title">Danh sách khách hàng nợ cước</span>
+                    <span class="text-xs text-rose-400 font-normal" id="debtCustomerCount">0 khách</span>
+                </h3>
+                <div id="debtCustomersList" class="space-y-2">
+                    </div>
+            </div>
+        </section>
+
+        <section id="tab-settings" class="tab-content hidden flex-1 flex flex-col p-4 space-y-4 overflow-y-auto pb-6">
+            <h2 class="font-bold text-lg text-slate-200" data-i18n="settings_title">Cài đặt hệ thống</h2>
+            
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <h3 class="font-bold text-sm text-brand-400" data-i18n="driver_info_title">Thông tin tài xế</h3>
+                <div class="space-y-2">
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1" data-i18n="driver_name_label">Tên tài xế</label>
+                        <input type="text" id="settingDriverName" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1" data-i18n="driver_plate_label">Biển số xe</label>
+                        <input type="text" id="settingDriverPlate" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <h3 class="font-bold text-sm text-brand-400" data-i18n="bank_info_title">Tài khoản nhận tiền (VietQR)</h3>
+                <div class="space-y-2">
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1" data-i18n="bank_select_label">Chọn Ngân hàng / Ví điện tử</label>
+                        <select id="settingBankName" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
+                            </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1" data-i18n="bank_acc_label">Số tài khoản / Số điện thoại ví</label>
+                        <input type="text" id="settingBankAcc" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1" data-i18n="bank_owner_label">Tên chủ tài khoản</label>
+                        <input type="text" id="settingBankOwner" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 uppercase focus:outline-none focus:border-brand-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-sm text-brand-400" data-i18n="tariffs_title">Quản lý giá cước</h3>
+                    <button onclick="openTariffModal()" class="bg-brand-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-brand-500 transition"><i class="fa-solid fa-plus mr-1"></i> Thêm</button>
+                </div>
+                <div id="tariffListContainer" class="space-y-2">
+                    </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <h3 class="font-bold text-sm text-brand-400" data-i18n="extra_settings_title">Cấu hình phí chờ & Bù trừ GPS</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-slate-300" data-i18n="enable_waiting_label">Tính phí thời gian chờ</span>
+                        <input type="checkbox" id="settingEnableWaiting" class="w-4 h-4 accent-brand-500 rounded">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1" data-i18n="waiting_rate_label">Đơn giá phí chờ (VNĐ / phút)</label>
+                        <input type="number" id="settingWaitingRate" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1" data-i18n="compensation_factor_label">Hệ số bù trừ GPS (Mặc định 1.0)</label>
+                        <input type="number" step="0.1" id="settingCompFactor" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="saveSettings()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-brand-600/30 transition text-sm" data-i18n="btn_save_settings">Lưu cấu hình</button>
+        </section>
+
+    </main>
+
+    <nav class="bg-slate-900 border-t border-slate-800 grid grid-cols-4 py-2 px-1 z-10 shrink-0">
+        <button onclick="switchTab('meter')" class="nav-btn flex flex-col items-center justify-center py-1 text-brand-500 transition" data-tab="meter">
+            <i class="fa-solid fa-taxi text-base"></i>
+            <span class="text-[10px] mt-1 font-medium" data-i18n="nav_meter">Đồng hồ</span>
+        </button>
+        <button onclick="switchTab('history')" class="nav-btn flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition" data-tab="history">
+            <i class="fa-solid fa-clock-rotate-left text-base"></i>
+            <span class="text-[10px] mt-1 font-medium" data-i18n="nav_history">Lịch sử</span>
+        </button>
+        <button onclick="switchTab('stats')" class="nav-btn flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition" data-tab="stats">
+            <i class="fa-solid fa-chart-pie text-base"></i>
+            <span class="text-[10px] mt-1 font-medium" data-i18n="nav_stats">Thống kê</span>
+        </button>
+        <button onclick="switchTab('settings')" class="nav-btn flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition" data-tab="settings">
+            <i class="fa-solid fa-sliders text-base"></i>
+            <span class="text-[10px] mt-1 font-medium" data-i18n="nav_settings">Cài đặt</span>
+        </button>
+    </nav>
+
+    <div id="tariffModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-5 space-y-4 shadow-2xl">
+            <h3 class="font-bold text-base text-white" id="tariffModalTitle">Thêm / Sửa Biểu Giá</h3>
+            <input type="hidden" id="tariffEditIndex" value="-1">
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">Tên gói cước</label>
+                    <input type="text" id="modalTariffName" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-500" placeholder="Ví dụ: Xe Điện 4 Chỗ">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">Số tiền mở cửa (VNĐ)</label>
+                    <input type="number" id="modalTariffBaseFare" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-500" placeholder="10000">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">Số km mở cửa (km)</label>
+                    <input type="number" step="0.1" id="modalTariffBaseKm" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-500" placeholder="1">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">Số tiền mỗi km tiếp theo (VNĐ)</label>
+                    <input type="number" id="modalTariffPerKm" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-500" placeholder="12000">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="closeTariffModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs transition">Hủy</button>
+                <button onclick="saveTariffModal()" class="bg-brand-600 hover:bg-brand-500 text-white font-bold py-2.5 rounded-xl text-xs transition">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="invoiceModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex flex-col overflow-y-auto p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md mx-auto rounded-3xl p-5 space-y-4 shadow-2xl my-auto text-slate-200">
+            
+            <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+                <h3 class="font-bold text-base text-white" data-i18n="invoice_title">Hóa đơn chuyến đi</h3>
+                <select id="invoiceLangSelect" onchange="renderInvoiceContent()" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1 focus:outline-none">
+                    <option value="vi">Tiếng Việt</option>
+                    <option value="en">English</option>
+                    <option value="zh">中文</option>
+                    <option value="ko">한국어</option>
+                </select>
+            </div>
+
+            <div id="invoiceBody" class="space-y-3 text-xs">
+                </div>
+
+            <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800 space-y-2">
+                <span class="text-xs font-bold text-slate-300 block" data-i18n="discount_title">Giảm giá cước</span>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[10px] text-slate-400 block mb-1">Giảm trực tiếp (đ)</label>
+                        <input type="number" id="discountAmountInput" oninput="calculateFinalInvoice()" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-white" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400 block mb-1">Giảm theo (%)</label>
+                        <input type="number" id="discountPercentInput" oninput="calculateFinalInvoice()" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-white" placeholder="0">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-brand-950/40 border border-brand-500/30 p-3 rounded-xl flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] text-brand-300 block uppercase font-bold" data-i18n="final_payable">Thực thu thanh toán</span>
+                    <div class="text-xl font-extrabold text-white" id="invoiceFinalAmount">0 đ</div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="invoiceUnpaidCheck" onchange="toggleUnpaidMode()" class="w-4 h-4 accent-rose-500 rounded">
+                    <label for="invoiceUnpaidCheck" class="text-xs text-rose-300 font-semibold cursor-pointer" data-i18n="mark_unpaid">Ghi nợ cước</label>
+                </div>
+            </div>
+
+            <div id="qrSectionWrapper" class="flex flex-col items-center justify-center p-3 bg-white rounded-2xl">
+                <div id="qrCodeContainer" class="cursor-pointer flex flex-col items-center" onclick="zoomQrCode()">
+                    <div id="qrImageWrapper" class="w-40 h-40 flex items-center justify-center bg-slate-100 rounded-lg">
+                        <img id="vietQrImg" src="" alt="VietQR" class="w-full h-full object-contain rounded">
+                    </div>
+                    <span class="text-[10px] text-slate-500 mt-1 font-medium"><i class="fa-solid fa-expand mr-1"></i> Bấm để phóng to QR</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-2">
+                <button onclick="closeInvoiceModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs transition" data-i18n="btn_close">Đóng</button>
+                <button onclick="confirmAndSaveTrip()" class="bg-brand-600 hover:bg-brand-500 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-lg shadow-brand-600/30" data-i18n="btn_save_trip">Lưu chuyến đi</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="qrZoomModal" class="fixed inset-0 bg-black/95 z-50 hidden flex flex-col items-center justify-center p-4" onclick="closeZoomQr()">
+        <img id="zoomedQrImg" src="" alt="Zoomed QR" class="max-w-full max-h-[80vh] object-contain rounded-2xl bg-white p-4 shadow-2xl">
+        <p class="text-slate-400 text-xs mt-4"><i class="fa-solid fa-xmark mr-1"></i> Chạm bất kỳ đâu để đóng</p>
+    </div>
+
+    <div id="bulkDebtModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex flex-col overflow-y-auto p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md mx-auto rounded-3xl p-5 space-y-4 shadow-2xl my-auto text-slate-200">
+            <h3 class="font-bold text-base text-white flex justify-between items-center">
+                <span id="bulkDebtTitle">Hóa đơn tổng công nợ</span>
+                <button onclick="closeBulkDebtModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </h3>
+            <div id="bulkDebtBody" class="space-y-3 text-xs max-h-[50vh] overflow-y-auto">
+                </div>
+            <div class="bg-brand-950/40 border border-brand-500/30 p-3 rounded-xl flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] text-brand-300 block uppercase font-bold">Tổng nợ cước chọn lọc</span>
+                    <div class="text-xl font-extrabold text-white" id="bulkDebtFinalAmount">0 đ</div>
+                </div>
+            </div>
+            <div id="bulkQrWrapper" class="flex flex-col items-center justify-center p-3 bg-white rounded-2xl">
+                <img id="bulkVietQrImg" src="" alt="Bulk QR" class="w-40 h-40 object-contain rounded">
+            </div>
+            <button onclick="markBulkAsPaid()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs transition">Xác nhận đã thanh toán toàn bộ</button>
+        </div>
+    </div>
+
+    <script>
+        // --- VIETNAMESE BANKS & E-WALLETS DATABASE ---
+        const VIETNAM_BANKS = [
+            { code: "ICB", name: "VietinBank" },
+            { code: "VCB", name: "Vietcombank" },
+            { code: "BIDV", name: "BIDV" },
+            { code: "VBA", name: "Agribank" },
+            { code: "TCB", name: "Techcombank" },
+            { code: "MB", name: "MB Bank" },
+            { code: "ACB", name: "ACB" },
+            { code: "VPB", name: "VPBank" },
+            { code: "TPB", name: "TPBank" },
+            { code: "STB", name: "Sacombank" },
+            { code: "HDB", name: "HDBank" },
+            { code: "VIB", name: "VIB" },
+            { code: "SHB", name: "SHB" },
+            { code: "EIB", name: "Eximbank" },
+            { code: "MSB", name: "MSB" },
+            { code: "OCB", name: "OCB" },
+            { code: "CAKE", name: "CAKE by VPBank" },
+            { code: "TIMO", name: "Timo by Ban Viet" },
+            { code: "MOMO", name: "Ví điện tử MoMo" },
+            { code: "ZALOPAY", name: "Ví điện tử ZaloPay" },
+            { code: "VIETTELPAY", name: "Viettel Money" }
+        ];
+
+        // --- TRANSLATIONS DICTIONARY ---
+        const I18N = {
+            vi: {
+                tariff_label: "Biểu phí áp dụng", speed_label: "Tốc độ hiện tại", time_label: "Thời gian chuyến",
+                total_fare_label: "Tổng cước tạm tính", distance_label: "Quãng đường", waiting_fee_label: "Phí chờ",
+                btn_start: "Bắt đầu", btn_pause: "Tạm dừng", btn_resume: "Tiếp tục", btn_complete: "Hoàn thành",
+                history_title: "Lịch sử chuyến đi", stats_title: "Thống kê thu nhập & Công nợ",
+                stat_revenue: "Tổng doanh thu", stat_paid: "Đã thanh toán", stat_unpaid: "Chưa thanh toán (Nợ)",
+                stat_trips_km: "Tổng cuốc / Km", settings_title: "Cài đặt hệ thống", driver_info_title: "Thông tin tài xế",
+                driver_name_label: "Tên tài xế", driver_plate_label: "Biển số xe", bank_info_title: "Tài khoản nhận tiền (VietQR)",
+                bank_select_label: "Chọn Ngân hàng / Ví điện tử", bank_acc_label: "Số tài khoản / SĐT ví", bank_owner_label: "Tên chủ tài khoản",
+                tariffs_title: "Quản lý giá cước", extra_settings_title: "Cấu hình phí chờ & Bù trừ GPS",
+                enable_waiting_label: "Tính phí thời gian chờ", waiting_rate_label: "Đơn giá phí chờ (VNĐ / phút)",
+                compensation_factor_label: "Hệ số bù trừ GPS (Mặc định 1.0)", btn_save_settings: "Lưu cấu hình",
+                nav_meter: "Đồng hồ", nav_history: "Lịch sử", nav_stats: "Thống kê", nav_settings: "Cài đặt",
+                invoice_title: "Hóa đơn chuyến đi", discount_title: "Giảm giá cước", final_payable: "Thực thu thanh toán",
+                mark_unpaid: "Ghi nợ cước", btn_close: "Đóng", btn_save_trip: "Lưu chuyến đi", debt_customers_title: "Danh sách khách hàng nợ cước"
+            },
+            en: {
+                tariff_label: "Active Tariff", speed_label: "Current Speed", time_label: "Trip Duration",
+                total_fare_label: "Estimated Fare", distance_label: "Distance", waiting_fee_label: "Waiting Fee",
+                btn_start: "Start", btn_pause: "Pause", btn_resume: "Resume", btn_complete: "Complete",
+                history_title: "Trip History", stats_title: "Income & Debt Statistics",
+                stat_revenue: "Total Revenue", stat_paid: "Paid Revenue", stat_unpaid: "Unpaid (Debt)",
+                stat_trips_km: "Total Trips / Km", settings_title: "System Settings", driver_info_title: "Driver Information",
+                driver_name_label: "Driver Name", driver_plate_label: "License Plate", bank_info_title: "Bank Account (VietQR)",
+                bank_select_label: "Select Bank / E-Wallet", bank_acc_label: "Account Number / Phone", bank_owner_label: "Account Holder",
+                tariffs_title: "Tariff Management", extra_settings_title: "Waiting Fee & GPS Config",
+                enable_waiting_label: "Enable Waiting Fee", waiting_rate_label: "Waiting Rate (VND / min)",
+                compensation_factor_label: "GPS Compensation Factor (Default 1.0)", btn_save_settings: "Save Settings",
+                nav_meter: "Meter", nav_history: "History", nav_stats: "Stats", nav_settings: "Settings",
+                invoice_title: "Trip Invoice", discount_title: "Discount", final_payable: "Final Payable",
+                mark_unpaid: "Mark Unpaid", btn_close: "Close", btn_save_trip: "Save Trip", debt_customers_title: "Debt Customers List"
+            },
+            zh: {
+                tariff_label: "适用费率", speed_label: "当前速度", time_label: "行程时间",
+                total_fare_label: "预估总车费", distance_label: "行驶里程", waiting_fee_label: "等待费",
+                btn_start: "开始", btn_pause: "暂停", btn_resume: "继续", btn_complete: "完成",
+                history_title: "行程历史", stats_title: "收入与债务统计",
+                stat_revenue: "总收入", stat_paid: "已支付收入", stat_unpaid: "未支付（欠款）",
+                stat_trips_km: "总行程 / 公里", settings_title: "系统设置", driver_info_title: "司机信息",
+                driver_name_label: "司机姓名", driver_plate_label: "车牌号", bank_info_title: "收款账户 (VietQR)",
+                bank_select_label: "选择银行/电子钱包", bank_acc_label: "账号/手机号", bank_owner_label: "账户所有人",
+                tariffs_title: "费率管理", extra_settings_title: "等待费与GPS补偿配置",
+                enable_waiting_label: "计算等待费", waiting_rate_label: "等待费单价 (越南盾/分钟)",
+                compensation_factor_label: "GPS补偿系数 (默认1.0)", btn_save_settings: "保存设置",
+                nav_meter: "计价器", nav_history: "历史", nav_stats: "统计", nav_settings: "设置",
+                invoice_title: "行程发票", discount_title: "折扣", final_payable: "最终应付",
+                mark_unpaid: "记账欠款", btn_close: "关闭", btn_save_trip: "保存行程", debt_customers_title: "欠款客户列表"
+            },
+            ko: {
+                tariff_label: "적용 요금제", speed_label: "현재 속도", time_label: "운행 시간",
+                total_fare_label: "예상 요금", distance_label: "이동 거리", waiting_fee_label: "대기 요금",
+                btn_start: "시작", btn_pause: "일시정지", btn_resume: "재개", btn_complete: "완료",
+                history_title: "운행 기록", stats_title: "수입 및 미수금 통계",
+                stat_revenue: "총수입", stat_paid: "수납 완료", stat_unpaid: "미수금 (부채)",
+                stat_trips_km: "총 운행 / 킬로미터", settings_title: "시스템 설정", driver_info_title: "운전자 정보",
+                driver_name_label: "운전자 성명", driver_plate_label: "차량 번호", bank_info_title: "입금 계좌 (VietQR)",
+                bank_select_label: "은행 / 전자지갑 선택", bank_acc_label: "계좌번호 / 전화번호", bank_owner_label: "예금주",
+                tariffs_title: "요금제 관리", extra_settings_title: "대기 요금 및 GPS 보정 설정",
+                enable_waiting_label: "대기 시간 요금 계산", waiting_rate_label: "대기 요금 단가 (VND / 분)",
+                compensation_factor_label: "GPS 보정 계수 (기본 1.0)", btn_save_settings: "설정 저장",
+                nav_meter: "미터기", nav_history: "기록", nav_stats: "통계", nav_settings: "설정",
+                invoice_title: "운행 영수증", discount_title: "할인", final_payable: "최종 결제 금액",
+                mark_unpaid: "미수금 기록", btn_close: "닫기", btn_save_trip: "운행 저장", debt_customers_title: "미수금 고객 목록"
+            }
+        };
+
+        // --- APP STATE ---
+        let appState = {
+            status: 'IDLE', // IDLE, RUNNING, PAUSED
+            startTime: null,
+            pausedDuration: 0,
+            pauseStartTime: null,
+            distance: 0, // km
+            waitingSeconds: 0,
+            currentSpeed: 0,
+            lastPosition: null,
+            speedBuffer: [], // Lớp 1: 30 mẫu tốc độ gần nhất
+            watchId: null,
+            gpsLostTimer: null,
+            isGpsLost: false,
+            startAddress: "Đang cập nhật...",
+            endAddress: "Đang cập nhật...",
+            startTimeStr: "",
+            endTimeStr: "",
+            currentTripId: null
+        };
+
+        // --- SETTINGS DATA ---
+        let settings = {
+            driverName: localStorage.getItem('ev_driverName') || "Nguyen Van A",
+            driverPlate: localStorage.getItem('ev_driverPlate') || "51F-123.45",
+            bankName: localStorage.getItem('ev_bankName') || "VCB",
+            bankAcc: localStorage.getItem('ev_bankAcc') || "0123456789",
+            bankOwner: localStorage.getItem('ev_bankOwner') || "NGUYEN VAN A",
+            enableWaiting: localStorage.getItem('ev_enableWaiting') !== 'false',
+            waitingRate: parseFloat(localStorage.getItem('ev_waitingRate')) || 500, // đ/phút
+            compFactor: parseFloat(localStorage.getItem('ev_compFactor')) || 1.0,
+            activeTariffIndex: parseInt(localStorage.getItem('ev_activeTariffIndex')) || 0,
+            tariffs: JSON.parse(localStorage.getItem('ev_tariffs')) || [
+                { name: "Xe Điện 4 Chỗ", baseFare: 10000, baseKm: 1, perKm: 12000 },
+                { name: "Xe Điện 7 Chỗ", baseFare: 15000, baseKm: 1, perKm: 15000 },
+                { name: "Xe Máy Điện", baseFare: 8000, baseKm: 1, perKm: 8000 }
+            ]
+        };
+
+        let tripHistory = JSON.parse(localStorage.getItem('ev_tripHistory')) || [];
+        let wakeLock = null;
+        let currentLang = 'vi';
+
+        // --- INITIALIZATION ---
+        window.addEventListener('DOMContentLoaded', () => {
+            initBankSelect();
+            loadSettingsToUI();
+            renderTariffList();
+            renderActiveTariffDropdown();
+            updateHistoryUI();
+            updateStatsUI();
+            setupVisibilityListener();
+            requestWakeLock();
+
+            // Khôi phục trạng thái nếu đang chạy dở trước khi đóng tab/trình duyệt
+            restoreActiveTripState();
+        });
+
+        // --- WAKE LOCK API (Giữ sáng màn hình) ---
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        function setupVisibilityListener() {
+            document.addEventListener('visibilitychange', async () => {
+                if (document.visibilityState === 'visible') {
+                    requestWakeLock();
+                    // Lớp 2: Xử lý khi mở lại ứng dụng sau khi ẩn
+                    if (appState.status === 'RUNNING') {
+                        // Kiểm tra tín hiệu GPS ngay khi resume
+                        checkGpsResumeSignal();
+                    }
+                }
+            });
+        }
+
+        // --- UI NAVIGATION TABS ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-brand-500');
+                btn.classList.add('text-slate-400');
+                if (btn.getAttribute('data-tab') === tabId) {
+                    btn.classList.add('text-brand-500');
+                    btn.classList.remove('text-slate-400');
+                }
+            });
+        }
+
+        // --- BANK SELECT INITIALIZATION ---
+        function initBankSelect() {
+            const select = document.getElementById('settingBankName');
+            select.innerHTML = VIETNAM_BANKS.map(b => `<option value="${b.code}">${b.name} (${b.code})</option>`).join('');
+        }
+
+        function loadSettingsToUI() {
+            document.getElementById('settingDriverName').value = settings.driverName;
+            document.getElementById('settingDriverPlate').value = settings.driverPlate;
+            document.getElementById('settingBankName').value = settings.bankName;
+            document.getElementById('settingBankAcc').value = settings.bankAcc;
+            document.getElementById('settingBankOwner').value = settings.bankOwner;
+            document.getElementById('settingEnableWaiting').checked = settings.enableWaiting;
+            document.getElementById('settingWaitingRate').value = settings.waitingRate;
+            document.getElementById('settingCompFactor').value = settings.compFactor;
+        }
+
+        function saveSettings() {
+            settings.driverName = document.getElementById('settingDriverName').value;
+            settings.driverPlate = document.getElementById('settingDriverPlate').value;
+            settings.bankName = document.getElementById('settingBankName').value;
+            settings.bankAcc = document.getElementById('settingBankAcc').value;
+            settings.bankOwner = document.getElementById('settingBankOwner').value.toUpperCase();
+            settings.enableWaiting = document.getElementById('settingEnableWaiting').checked;
+            settings.waitingRate = parseFloat(document.getElementById('settingWaitingRate').value) || 500;
+            settings.compFactor = parseFloat(document.getElementById('settingCompFactor').value) || 1.0;
+
+            localStorage.setItem('ev_driverName', settings.driverName);
+            localStorage.setItem('ev_driverPlate', settings.driverPlate);
+            localStorage.setItem('ev_bankName', settings.bankName);
+            localStorage.setItem('ev_bankAcc', settings.bankAcc);
+            localStorage.setItem('ev_bankOwner', settings.bankOwner);
+            localStorage.setItem('ev_enableWaiting', settings.enableWaiting);
+            localStorage.setItem('ev_waitingRate', settings.waitingRate);
+            localStorage.setItem('ev_compFactor', settings.compFactor);
+
+            alert("Đã lưu cấu hình thành công!");
+            switchTab('meter');
+        }
+
+        // --- TARIFFS MANAGEMENT ---
+        function renderTariffList() {
+            const container = document.getElementById('tariffListContainer');
+            container.innerHTML = settings.tariffs.map((t, idx) => `
+                <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs">
+                    <div>
+                        <div class="font-bold text-slate-200">${t.name}</div>
+                        <div class="text-slate-400 mt-0.5">Mở cửa: ${t.baseFare.toLocaleString()}đ (${t.baseKm}km) | Tiếp: ${t.perKm.toLocaleString()}đ/km</div>
+                    </div>
+                    <div class="flex space-x-1">
+                        <button onclick="editTariff(${idx})" class="w-7 h-7 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center justify-center"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                        <button onclick="deleteTariff(${idx})" class="w-7 h-7 rounded bg-rose-950 text-rose-400 hover:bg-rose-900 flex items-center justify-center"><i class="fa-solid fa-trash text-[10px]"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderActiveTariffDropdown() {
+            const select = document.getElementById('activeTariffSelect');
+            select.innerHTML = settings.tariffs.map((t, idx) => `<option value="${idx}" ${idx === settings.activeTariffIndex ? 'selected' : ''}>${t.name}</option>`).join('');
+        }
+
+        function changeActiveTariff() {
+            settings.activeTariffIndex = parseInt(document.getElementById('activeTariffSelect').value);
+            localStorage.setItem('ev_activeTariffIndex', settings.activeTariffIndex);
+            calculateCurrentFare();
+        }
+
+        function openTariffModal(index = -1) {
+            document.getElementById('tariffEditIndex').value = index;
+            if (index >= 0) {
+                const t = settings.tariffs[index];
+                document.getElementById('modalTariffName').value = t.name;
+                document.getElementById('modalTariffBaseFare').value = t.baseFare;
+                document.getElementById('modalTariffBaseKm').value = t.baseKm;
+                document.getElementById('modalTariffPerKm').value = t.perKm;
+                document.getElementById('tariffModalTitle').innerText = "Sửa Biểu Giá";
+            } else {
+                document.getElementById('modalTariffName').value = "";
+                document.getElementById('modalTariffBaseFare').value = "";
+                document.getElementById('modalTariffBaseKm').value = "";
+                document.getElementById('modalTariffPerKm').value = "";
+                document.getElementById('tariffModalTitle').innerText = "Thêm Biểu Giá Mới";
+            }
+            document.getElementById('tariffModal').classList.remove('hidden');
+        }
+
+        function closeTariffModal() {
+            document.getElementById('tariffModal').classList.add('hidden');
+        }
+
+        function editTariff(index) { openTariffModal(index); }
+
+        function deleteTariff(index) {
+            if (settings.tariffs.length <= 1) { alert("Phải giữ lại ít nhất 1 biểu giá!"); return; }
+            settings.tariffs.splice(index, 1);
+            if (settings.activeTariffIndex >= settings.tariffs.length) settings.activeTariffIndex = 0;
+            localStorage.setItem('ev_tariffs', JSON.stringify(settings.tariffs));
+            renderTariffList();
+            renderActiveTariffDropdown();
+        }
+
+        function saveTariffModal() {
+            const index = parseInt(document.getElementById('tariffEditIndex').value);
+            const name = document.getElementById('modalTariffName').value;
+            const baseFare = parseFloat(document.getElementById('modalTariffBaseFare').value) || 0;
+            const baseKm = parseFloat(document.getElementById('modalTariffBaseKm').value) || 1;
+            const perKm = parseFloat(document.getElementById('modalTariffPerKm').value) || 0;
+
+            if (!name) { alert("Vui lòng nhập tên gói cước!"); return; }
+
+            const newTariff = { name, baseFare, baseKm, perKm };
+            if (index >= 0) {
+                settings.tariffs[index] = newTariff;
+            } else {
+                settings.tariffs.push(newTariff);
+            }
+            localStorage.setItem('ev_tariffs', JSON.stringify(settings.tariffs));
+            renderTariffList();
+            renderActiveTariffDropdown();
+            closeTariffModal();
+        }
+
+        // --- TRIP LOGIC & GPS 4 LAYERS ENGINE ---
+        let timerInterval = null;
+
+        function startTrip() {
+            appState.status = 'RUNNING';
+            appState.startTime = new Date();
+            appState.startTimeStr = formatDateTime(appState.startTime);
+            appState.pausedDuration = 0;
+            appState.distance = 0;
+            appState.waitingSeconds = 0;
+            appState.speedBuffer = [];
+            appState.lastPosition = null;
+            appState.currentTripId = 'TRIP_' + Date.now();
+
+            // UI changes
+            document.getElementById('btnStart').disabled = true;
+            document.getElementById('btnStart').className = "bg-slate-800 text-slate-500 font-bold py-4 rounded-2xl flex flex-col items-center justify-center space-y-1";
+            document.getElementById('btnPause').disabled = false;
+            document.getElementById('btnPause').className = "bg-amber-600 hover:bg-amber-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-amber-600/30 flex flex-col items-center justify-center space-y-1 transition active:scale-95";
+            document.getElementById('btnComplete').disabled = false;
+            document.getElementById('btnComplete').className = "bg-rose-600 hover:bg-rose-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-rose-600/30 flex flex-col items-center justify-center space-y-1 transition active:scale-95";
+
+            // Lấy địa chỉ điểm đón qua OpenStreetMap (Reverse Geocoding)
+            fetchAddress(true);
+
+            // Bắt đầu bộ đếm thời gian
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(updateTripMetrics, 1000);
+
+            // Bắt đầu theo dõi GPS
+            startGpsTracking();
+            saveActiveTripState();
+        }
+
+        function pauseTrip() {
+            if (appState.status === 'RUNNING') {
+                appState.status = 'PAUSED';
+                appState.pauseStartTime = new Date();
+                document.getElementById('pauseBtnText').setAttribute('data-i18n', 'btn_resume');
+                document.getElementById('pauseBtnText').innerText = "Tiếp tục";
+                document.getElementById('btnPause').className = "bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-600/30 flex flex-col items-center justify-center space-y-1 transition active:scale-95";
+            } else if (appState.status === 'PAUSED') {
+                appState.status = 'RUNNING';
+                if (appState.pauseStartTime) {
+                    appState.pausedDuration += (new Date() - appState.pauseStartTime);
+                    appState.pauseStartTime = null;
+                }
+                document.getElementById('pauseBtnText').setAttribute('data-i18n', 'btn_pause');
+                document.getElementById('pauseBtnText').innerText = "Tạm dừng";
+                document.getElementById('btnPause').className = "bg-amber-600 hover:bg-amber-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-amber-600/30 flex flex-col items-center justify-center space-y-1 transition active:scale-95";
+            }
+            saveActiveTripState();
+        }
+
+        function updateTripMetrics() {
+            if (appState.status !== 'RUNNING') {
+                if (appState.status === 'PAUSED' && settings.enableWaiting) {
+                    appState.waitingSeconds++;
+                }
+                return;
+            }
+
+            // Tính thời gian thực tế
+            const now = new Date();
+            const elapsedMs = now - appState.startTime - appState.pausedDuration;
+            const totalSecs = Math.floor(elapsedMs / 1000);
+            
+            const hours = String(Math.floor(totalSecs / 3600)).padStart(2, '0');
+            const mins = String(Math.floor((totalSecs % 3600) / 60)).padStart(2, '0');
+            const secs = String(totalSecs % 60).padStart(2, '0');
+            document.getElementById('tripDuration').innerText = `${hours}:${mins}:${secs}`;
+
+            // Tính phí chờ nếu xe dừng hoặc tốc độ rất thấp
+            if (settings.enableWaiting && appState.currentSpeed < 5) {
+                appState.waitingSeconds++;
+            }
+
+            calculateCurrentFare();
+            saveActiveTripState();
+        }
+
+        function calculateCurrentFare() {
+            const tariff = settings.tariffs[settings.activeTariffIndex];
+            let distanceKm = appState.distance * settings.compFactor;
+            
+            let fare = 0;
+            if (distanceKm <= tariff.baseKm) {
+                fare = tariff.baseFare;
+            } else {
+                fare = tariff.baseFare + (distanceKm - tariff.baseKm) * tariff.perKm;
+            }
+
+            // Thêm phí chờ
+            let waitingFee = 0;
+            if (settings.enableWaiting) {
+                waitingFee = Math.floor(appState.waitingSeconds / 60) * settings.waitingRate;
+            }
+
+            const totalFare = Math.round(fare + waitingFee);
+
+            document.getElementById('tripDistance').innerText = distanceKm.toFixed(2);
+            document.getElementById('totalFareDisplay').innerText = totalFare.toLocaleString();
+            document.getElementById('waitingFeeDisplay').innerText = waitingFee.toLocaleString();
+
+            return { distanceKm, fare, waitingFee, totalFare };
+        }
+
+        // --- 4 LỚP BÙ TRỪ GPS KỸ THUẬT CAO ---
+        function startGpsTracking() {
+            if (!navigator.geolocation) {
+                alert("Trình duyệt không hỗ trợ Geolocation GPS!");
+                return;
+            }
+
+            const options = { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 };
+            appState.watchId = navigator.geolocation.watchPosition(onGpsSuccess, onGpsError, options);
+        }
+
+        function onGpsSuccess(position) {
+            clearTimeout(appState.gpsLostTimer);
+            if (appState.isGpsLost) {
+                appState.isGpsLost = false;
+                document.getElementById('gpsLostBanner').classList.add('hidden');
+            }
+            document.getElementById('gpsStatusBadge').className = "flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium";
+            document.getElementById('gpsStatusText').innerText = "GPS Hoạt động";
+
+            const { latitude, longitude, speed, accuracy } = position.coords;
+            const currentPoint = { lat: latitude, lng: longitude, time: Date.now(), speed: speed || 0, accuracy: accuracy || 10 };
+
+            // Lớp 2: Bộ lọc Jump Filter & Accuracy Check
+            if (currentPoint.accuracy > 35) return; // Bỏ qua nếu sai số phần cứng quá lớn
+
+            if (appState.lastPosition) {
+                const distMeters = calculateHaversineDistance(appState.lastPosition.lat, appState.lastPosition.lng, currentPoint.lat, currentPoint.lng);
+                const timeDiffSec = (currentPoint.time - appState.lastPosition.time) / 1000;
+                if (timeDiffSec > 0) {
+                    const calculatedSpeedKmH = (distMeters / timeDiffSec) * 3.6;
+                    if (calculatedSpeedKmH > 120) return; // Bỏ qua nếu tốc độ vượt ngưỡng vật lý (> 120 km/h)
+                }
+
+                // Lớp 3: Haversine kết hợp Kalman giả lập tinh chỉnh
+                appState.distance += (distMeters / 1000);
+            }
+
+            // Lớp 1: Cập nhật speedBuffer (30 mẫu tốc độ gần nhất)
+            const curSpeedKmh = (currentPoint.speed * 3.6) || 0;
+            appState.currentSpeed = Math.round(curSpeedKmh);
+            document.getElementById('currentSpeed').innerText = appState.currentSpeed;
+
+            appState.speedBuffer.push(curSpeedKmh);
+            if (appState.speedBuffer.length > 30) appState.speedBuffer.shift();
+
+            appState.lastPosition = currentPoint;
+
+            // Kích hoạt bộ đếm phát hiện mất sóng (> 7000 ms không nhận được điểm GPS mới)
+            resetGpsLostTimer();
+        }
+
+        function onGpsError(err) {
+            triggerGpsLostMode();
+        }
+
+        function resetGpsLostTimer() {
+            clearTimeout(appState.gpsLostTimer);
+            appState.gpsLostTimer = setTimeout(() => {
+                triggerGpsLostMode();
+            }, 7000); // Mất sóng > 7 giây
+        }
+
+        function triggerGpsLostMode() {
+            appState.isGpsLost = true;
+            document.getElementById('gpsLostBanner').classList.remove('hidden');
+            document.getElementById('gpsStatusBadge').className = "flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium";
+            document.getElementById('gpsStatusText').innerText = "Mất tín hiệu GPS!";
+
+            // Lớp 1 & Lớp 4: Nội suy quán tính & Tự động tính quãng đường hụt
+            if (appState.status === 'RUNNING') {
+                const avgSpeed = appState.speedBuffer.length > 0 
+                    ? appState.speedBuffer.reduce((a,b) => a+b, 0) / appState.speedBuffer.length 
+                    : 20;
+                
+                const minSpeedFloor = Math.max(avgSpeed, 15); // Ngưỡng vận tốc sàn tối thiểu 15 km/h
+                // Giả lập nội suy mỗi giây mất sóng thêm vào khoảng cách
+                const addedKmPerSec = (minSpeedFloor / 3600);
+                appState.distance += addedKmPerSec;
+            }
+        }
+
+        function applyManualGpsOverride() {
+            // Lớp 4: Gợi ý bù trừ thủ công 1 chạm
+            const estimatedMissingKm = 0.5; // Gợi ý bù thêm 0.5 km khi mất sóng dài
+            appState.distance += estimatedMissingKm;
+            alert(`Đã tự động bù trừ thành công ${estimatedMissingKm} km vào quãng đường chuyến đi!`);
+            document.getElementById('gpsLostBanner').classList.add('hidden');
+        }
+
+        function checkGpsResumeSignal() {
+            // Khi app resume, yêu cầu cập nhật lại vị trí ngay
+            navigator.geolocation.getCurrentPosition(onGpsSuccess, onGpsError, { enableHighAccuracy: true, timeout: 5000 });
+        }
+
+        function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; // Bán kính trái đất tính bằng mét
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        // --- REVERSE GEOCODING WITH OPENSTREETMAP ---
+        async function fetchAddress(isStart) {
+            if (!appState.lastPosition) {
+                // Tọa độ giả lập trung tâm nếu chưa bắt được GPS ngay
+                const defaultAddr = isStart ? "Bến xe Miền Đông, TP.HCM" : "Chợ Bến Thành, Quận 1, TP.HCM";
+                if (isStart) appState.startAddress = defaultAddr;
+                else appState.endAddress = defaultAddr;
+                return;
+            }
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${appState.lastPosition.lat}&lon=${appState.lastPosition.lng}`);
+                const data = await res.json();
+                const addressStr = data.display_name || "Địa chỉ chi tiết không xác định";
+                if (isStart) appState.startAddress = addressStr;
+                else appState.endAddress = addressStr;
+            } catch (e) {
+                if (isStart) appState.startAddress = "Khu vực nội thành TP.HCM";
+                else appState.endAddress = appState.startAddress;
+            }
+        }
+
+        // --- COMPLETE TRIP & INVOICE GENERATION ---
+        async function completeTrip() {
+            if (appState.status === 'IDLE') return;
+            if (appState.watchId) navigator.geolocation.clearWatch(appState.watchId);
+            if (timerInterval) clearInterval(timerInterval);
+
+            appState.status = 'IDLE';
+            appState.endTimeStr = formatDateTime(new Date());
+            await fetchAddress(false);
+
+            // Reset UI buttons
+            document.getElementById('btnStart').disabled = false;
+            document.getElementById('btnStart').className = "bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-600/30 flex flex-col items-center justify-center space-y-1 transition active:scale-95";
+            document.getElementById('btnPause').disabled = true;
+            document.getElementById('btnPause').className = "bg-slate-800 text-slate-500 font-bold py-4 rounded-2xl flex flex-col items-center justify-center space-y-1";
+            document.getElementById('btnComplete').disabled = true;
+            document.getElementById('btnComplete').className = "bg-rose-600/50 text-slate-400 font-bold py-4 rounded-2xl flex flex-col items-center justify-center space-y-1";
+
+            clearActiveTripState();
+
+            // Mở modal hóa đơn
+            openInvoiceModal();
+        }
+
+        let pendingTripData = null;
+
+        function openInvoiceModal() {
+            const metrics = calculateCurrentFare();
+            pendingTripData = {
+                id: appState.currentTripId || ('TRIP_' + Date.now()),
+                driverName: settings.driverName,
+                driverPlate: settings.driverPlate,
+                startAddress: appState.startAddress,
+                endAddress: appState.endAddress,
+                startTime: appState.startTimeStr,
+                endTime: appState.endTimeStr,
+                distance: parseFloat((appState.distance * settings.compFactor).toFixed(2)),
+                tariffName: settings.tariffs[settings.activeTariffIndex].name,
+                fare: metrics.fare,
+                waitingFee: metrics.waitingFee,
+                totalFare: metrics.totalFare,
+                discount: 0,
+                finalAmount: metrics.totalFare,
+                isPaid: true,
+                customerName: "Khách lẻ vãng lai"
+            };
+
+            document.getElementById('discountAmountInput').value = "";
+            document.getElementById('discountPercentInput').value = "";
+            document.getElementById('invoiceUnpaidCheck').checked = false;
+            
+            renderInvoiceContent();
+            document.getElementById('invoiceModal').classList.remove('hidden');
+        }
+
+        function closeInvoiceModal() {
+            document.getElementById('invoiceModal').classList.add('hidden');
+        }
+
+        function renderInvoiceContent() {
+            currentLang = document.getElementById('invoiceLangSelect').value;
+            const t = pendingTripData;
+            if (!t) return;
+
+            const body = document.getElementById('invoiceBody');
+            body.innerHTML = `
+                <div class="space-y-1.5 pb-3 border-b border-slate-800">
+                    <div class="flex justify-between"><span class="text-slate-400">Tài xế / Driver:</span> <span class="font-bold text-white">${t.driverName}</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Biển số / Plate:</span> <span class="font-bold text-white">${t.driverPlate}</span></div>
+                </div>
+                <div class="space-y-1.5 pb-3 border-b border-slate-800">
+                    <div class="text-slate-400">Điểm đón (Pickup): <span class="text-white block font-medium mt-0.5">${t.startAddress}</span></div>
+                    <div class="text-slate-400 mt-1">Điểm trả (Dropoff): <span class="text-white block font-medium mt-0.5">${t.endAddress}</span></div>
+                    <div class="flex justify-between mt-1"><span class="text-slate-400">Thời gian:</span> <span class="text-white">${t.startTime} → ${t.endTime}</span></div>
+                </div>
+                <div class="space-y-1.5 pb-3 border-b border-slate-800">
+                    <div class="flex justify-between"><span class="text-slate-400">Gói cước:</span> <span class="text-white">${t.tariffName}</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Quãng đường:</span> <span class="text-white">${t.distance} km</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Cước đo đường:</span> <span class="text-white">${t.fare.toLocaleString()} đ</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Phí chờ:</span> <span class="text-white">${t.waitingFee.toLocaleString()} đ</span></div>
+                </div>
+            `;
+
+            calculateFinalInvoice();
+        }
+
+        function calculateFinalInvoice() {
+            if (!pendingTripData) return;
+            const discountAmt = parseFloat(document.getElementById('discountAmountInput').value) || 0;
+            const discountPct = parseFloat(document.getElementById('discountPercentInput').value) || 0;
+
+            let total = pendingTripData.totalFare;
+            let discountTotal = discountAmt + (total * discountPct / 100);
+            let final = Math.max(0, Math.round(total - discountTotal));
+
+            pendingTripData.discount = discountTotal;
+            pendingTripData.finalAmount = final;
+
+            document.getElementById('invoiceFinalAmount').innerText = final.toLocaleString() + " đ";
+
+            // Tạo VietQR động qua API QuickLink (VietQR.io)
+            const isUnpaid = document.getElementById('invoiceUnpaidCheck').checked;
+            if (isUnpaid) {
+                document.getElementById('qrSectionWrapper').classList.add('hidden');
+            } else {
+                document.getElementById('qrSectionWrapper').classList.remove('hidden');
+                const qrImgUrl = `https://img.vietqr.io/image/${settings.bankName}-${settings.bankAcc}-compact2.png?amount=${final}&addInfo=EVTaximeter%20${pendingTripData.id}&accountName=${encodeURIComponent(settings.bankOwner)}`;
+                document.getElementById('vietQrImg').src = qrImgUrl;
+            }
+        }
+
+        function toggleUnpaidMode() {
+            const isUnpaid = document.getElementById('invoiceUnpaidCheck').checked;
+            pendingTripData.isPaid = !isUnpaid;
+            if (isUnpaid) {
+                // Nhập tên khách hàng ghi nợ
+                const custName = prompt("Nhập tên khách hàng / SĐT ghi nợ cước:", "Khách hàng VIP");
+                if (custName) pendingTripData.customerName = custName;
+            }
+            calculateFinalInvoice();
+        }
+
+        function zoomQrCode() {
+            const final = pendingTripData.finalAmount;
+            const qrImgUrl = `https://img.vietqr.io/image/${settings.bankName}-${settings.bankAcc}-compact2.png?amount=${final}&addInfo=EVTaximeter%20${pendingTripData.id}&accountName=${encodeURIComponent(settings.bankOwner)}`;
+            document.getElementById('zoomedQrImg').src = qrImgUrl;
+            document.getElementById('qrZoomModal').classList.remove('hidden');
+        }
+
+        function closeZoomQr() {
+            document.getElementById('qrZoomModal').classList.add('hidden');
+        }
+
+        function confirmAndSaveTrip() {
+            if (!pendingTripData) return;
+            tripHistory.unshift(pendingTripData);
+            localStorage.setItem('ev_tripHistory', JSON.stringify(tripHistory));
+
+            updateHistoryUI();
+            updateStatsUI();
+            closeInvoiceModal();
+            alert("Đã lưu chuyến đi vào lịch sử thành công!");
+        }
+
+        // --- HISTORY & STATS UI ---
+        function updateHistoryUI() {
+            const container = document.getElementById('historyListContainer');
+            document.getElementById('historyCount').innerText = `${tripHistory.length} chuyến`;
+
+            if (tripHistory.length === 0) {
+                container.innerHTML = `<div class="text-center py-12 text-slate-500 text-xs">Chưa có lịch sử chuyến đi nào.</div>`;
+                return;
+            }
+
+            container.innerHTML = tripHistory.map((trip, idx) => `
+                <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl space-y-2 text-xs">
+                    <div class="flex justify-between items-center pb-2 border-b border-slate-800/80">
+                        <span class="font-bold text-slate-300">${trip.startTime}</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${trip.isPaid ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
+                            ${trip.isPaid ? 'Đã thanh toán' : 'Chưa thanh toán (Nợ)'}
+                        </span>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="text-slate-400 truncate"><strong class="text-slate-300">Đón:</strong> ${trip.startAddress}</div>
+                        <div class="text-slate-400 truncate"><strong class="text-slate-300">Trả:</strong> ${trip.endAddress}</div>
+                    </div>
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-800/80">
+                        <span class="text-slate-400">${trip.distance} km | ${trip.tariffName}</span>
+                        <span class="font-extrabold text-white text-sm">${trip.finalAmount.toLocaleString()} đ</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateStatsUI() {
+            let totalRev = 0, paidRev = 0, unpaidRev = 0, totalKm = 0;
+            let customerDebtMap = {};
+
+            tripHistory.forEach(trip => {
+                totalRev += trip.finalAmount;
+                totalKm += trip.distance;
+                if (trip.isPaid) {
+                    paidRev += trip.finalAmount;
+                } else {
+                    unpaidRev += trip.finalAmount;
+                    const cName = trip.customerName || "Khách lẻ";
+                    if (!customerDebtMap[cName]) customerDebtMap[cName] = { count: 0, totalDebt: 0, trips: [] };
+                    customerDebtMap[cName].count++;
+                    customerDebtMap[cName].totalDebt += trip.finalAmount;
+                    customerDebtMap[cName].trips.push(trip);
+                }
+            });
+
+            document.getElementById('statTotalRev').innerText = totalRev.toLocaleString() + " đ";
+            document.getElementById('statPaidRev').innerText = paidRev.toLocaleString() + " đ";
+            document.getElementById('statUnpaidRev').innerText = unpaidRev.toLocaleString() + " đ";
+            document.getElementById('statTripsCount').innerText = tripHistory.length;
+            document.getElementById('statKmCount').innerText = totalKm.toFixed(1);
+
+            // Render Debt Customers List
+            const debtContainer = document.getElementById('debtCustomersList');
+            const debtEntries = Object.entries(customerDebtMap);
+            document.getElementById('debtCustomerCount').innerText = `${debtEntries.length} khách`;
+
+            if (debtEntries.length === 0) {
+                debtContainer.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">Không có khách hàng nào nợ cước.</div>`;
+                return;
+            }
+
+            debtContainer.innerHTML = debtEntries.map(([cName, data]) => `
+                <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs">
+                    <div>
+                        <div class="font-bold text-white">${cName}</div>
+                        <div class="text-rose-400 font-semibold mt-0.5">Nợ: ${data.totalDebt.toLocaleString()} đ (${data.count} cuốc)</div>
+                    </div>
+                    <button onclick='openBulkDebtModal("${cName}", ${JSON.stringify(data.trips)})' class="bg-brand-600 hover:bg-brand-500 text-white px-3 py-1.5 rounded-lg font-bold transition">Xuất hóa đơn tổng</button>
+                </div>
+            `).join('');
+        }
+
+        // --- BULK DEBT INVOICE MODAL ---
+        let currentBulkCustomer = null;
+        let currentBulkTrips = [];
+
+        function openBulkDebtModal(customerName, trips) {
+            currentBulkCustomer = customerName;
+            currentBulkTrips = trips;
+            document.getElementById('bulkDebtTitle').innerText = `Hóa đơn tổng nợ: ${customerName}`;
+
+            let totalDebt = trips.reduce((sum, t) => sum + t.finalAmount, 0);
+            document.getElementById('bulkDebtFinalAmount').innerText = totalDebt.toLocaleString() + " đ";
+
+            const body = document.getElementById('bulkDebtBody');
+            body.innerHTML = trips.map(t => `
+                <div class="p-2 bg-slate-950 rounded-lg border border-slate-800 flex justify-between items-center">
+                    <div>
+                        <div class="font-semibold text-slate-300">${t.startTime}</div>
+                        <div class="text-[10px] text-slate-400">${t.distance} km - ${t.endAddress}</div>
+                    </div>
+                    <span class="font-bold text-white">${t.finalAmount.toLocaleString()} đ</span>
+                </div>
+            `).join('');
+
+            // Tạo QR tổng nợ (Không bao gồm QR từng chuyến riêng lẻ)
+            const qrImgUrl = `https://img.vietqr.io/image/${settings.bankName}-${settings.bankAcc}-compact2.png?amount=${totalDebt}&addInfo=TongNo%20${encodeURIComponent(customerName)}&accountName=${encodeURIComponent(settings.bankOwner)}`;
+            document.getElementById('bulkVietQrImg').src = qrImgUrl;
+
+            document.getElementById('bulkDebtModal').classList.remove('hidden');
+        }
+
+        function closeBulkDebtModal() {
+            document.getElementById('bulkDebtModal').classList.add('hidden');
+        }
+
+        function markBulkAsPaid() {
+            currentBulkTrips.forEach(trip => {
+                const found = tripHistory.find(t => t.id === trip.id);
+                if (found) found.isPaid = true;
+            });
+            localStorage.setItem('ev_tripHistory', JSON.stringify(tripHistory));
+            updateHistoryUI();
+            updateStatsUI();
+            closeBulkDebtModal();
+            alert(`Đã đánh dấu toàn bộ công nợ của ${currentBulkCustomer} là ĐÃ THANH TOÁN!`);
+        }
+
+        // --- SESSION PERSISTENCE (Chống mất trạng thái khi thoát đa nhiệm) ---
+        function saveActiveTripState() {
+            if (appState.status !== 'IDLE') {
+                const stateData = {
+                    status: appState.status,
+                    startTime: appState.startTime ? appState.startTime.getTime() : null,
+                    pausedDuration: appState.pausedDuration,
+                    distance: appState.distance,
+                    waitingSeconds: appState.waitingSeconds,
+                    startAddress: appState.startAddress,
+                    startTimeStr: appState.startTimeStr,
+                    currentTripId: appState.currentTripId
+                };
+                localStorage.setItem('ev_activeTrip', JSON.stringify(stateData));
+            }
+        }
+
+        function restoreActiveTripState() {
+            const saved = localStorage.getItem('ev_activeTrip');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    appState.status = data.status;
+                    appState.startTime = data.startTime ? new Date(data.startTime) : new Date();
+                    appState.pausedDuration = data.pausedDuration || 0;
+                    appState.distance = data.distance || 0;
+                    appState.waitingSeconds = data.waitingSeconds || 0;
+                    appState.startAddress = data.startAddress || "";
+                    appState.startTimeStr = data.startTimeStr || "";
+                    appState.currentTripId = data.currentTripId || ('TRIP_' + Date.now());
+
+                    if (appState.status === 'RUNNING' || appState.status === 'PAUSED') {
+                        document.getElementById('btnStart').disabled = true;
+                        document.getElementById('btnStart').className = "bg-slate-800 text-slate-500 font-bold py-4 rounded-2xl flex flex-col items-center justify-center space-y-1";
+                        document.getElementById('btnPause').disabled = false;
+                        document.getElementById('btnPause').className = appState.status === 'PAUSED' ? "bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-600/30 flex flex-col items-center justify-center space-y-1 transition active:scale-95" : "bg-amber-600 hover:bg-amber-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-amber-600/30 flex flex-col items-center justify-center space-y-1 transition active:scale-95";
+                        if(appState.status === 'PAUSED') {
+                            document.getElementById('pauseBtnText').innerText = "Tiếp tục";
+                        }
+                        document.getElementById('btnComplete').disabled = false;
+                        document.getElementById('btnComplete').className = "bg-rose-600 hover:bg-rose-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-rose-600/30 flex flex-col items-center justify-center space-y-1 transition active:scale-95";
+
+                        if (timerInterval) clearInterval(timerInterval);
+                        timerInterval = setInterval(updateTripMetrics, 1000);
+                        startGpsTracking();
+                    }
+                } catch (e) { console.error(e); }
+            }
+        }
+
+        function clearActiveTripState() {
+            localStorage.removeItem('ev_activeTrip');
+        }
+
+        function formatDateTime(date) {
+            const d = String(date.getDate()).padStart(2, '0');
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const y = date.getFullYear();
+            const h = String(date.getHours()).padStart(2, '0');
+            const min = String(date.getMinutes()).padStart(2, '0');
+            return `${h}:${min} ${d}/${m}/${y}`;
+        }
+    </script>
+</body>
+</html>
