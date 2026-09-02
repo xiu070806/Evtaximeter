@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EVTaximeter - Đồng Hồ Taxi Điện Tử</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #00d26a;
+            --primary-dark: #00a854;
+            --bg-dark: #121824;
+            --card-bg: rgba(22, 30, 46, 0.85);
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ff4757;
+            --warning: #ffa502;
+            --accent: #2ed573;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Glassmorphism Overlay Controls */
+        .app-header {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            z-index: 1000;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        .gps-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(0,0,0,0.4);
+        }
+
+        .gps-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #747d8c;
+        }
+        .gps-dot.active { background: var(--primary-color); box-shadow: 0 0 10px var(--primary-color); }
+        .gps-dot.lost { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
+
+        .tariff-selector-top {
+            position: absolute;
+            top: 75px;
+            left: 12px;
+            right: 12px;
+            z-index: 1000;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tariff-select {
+            background: rgba(0,0,0,0.5);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            width: 100%;
+        }
+
+        /* Meter Display Overlay */
+        .meter-dashboard {
+            position: absolute;
+            bottom: 20px;
+            left: 12px;
+            right: 12px;
+            z-index: 1000;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+        }
+
+        .total-fare-container {
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+
+        .fare-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .total-fare {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            font-family: 'Courier New', Courier, monospace;
+            text-shadow: 0 0 15px rgba(0, 210, 106, 0.4);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 5px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .control-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn {
+            border: none;
+            padding: 14px;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            color: white;
+        }
+
+        .btn-start { background: var(--primary-color); grid-column: span 2; }
+        .btn-pause { background: var(--warning); }
+        .btn-finish { background: var(--danger); }
+        .btn-secondary { background: rgba(255,255,255,0.15); }
+
+        /* Floating Nav Buttons */
+        .side-nav {
+            position: absolute;
+            right: 12px;
+            top: 135px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* Modal Screens */
+        .modal-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-dark);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .modal-screen.active { display: flex; }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+
+        .modal-title { font-size: 1.4rem; font-weight: 700; }
+        .close-btn { font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        /* Invoice Preview Styling */
+        .invoice-card {
+            background: #fff;
+            color: #333;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .invoice-card h2 { text-align: center; color: #111; margin-bottom: 5px; }
+        .invoice-card p { font-size: 0.9rem; margin: 4px 0; }
+        .invoice-divider { border-top: 1px dashed #ccc; margin: 12px 0; }
+
+        .qr-container {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .qr-container img { max-width: 200px; border-radius: 8px; }
+
+        .gps-alert-banner {
+            position: absolute;
+            top: 125px;
+            left: 12px;
+            right: 12px;
+            z-index: 1000;
+            background: rgba(255, 71, 87, 0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <div class="brand">
+            <i class="fa-solid fa-bolt"></i> EVTaximeter
+        </div>
+        <div class="gps-status" id="gpsStatusContainer">
+            <div class="gps-dot" id="gpsDot"></div>
+            <span id="gpsStatusText">Đang tìm GPS...</span>
+        </div>
+    </div>
+
+    <div class="tariff-selector-top">
+        <span style="font-size: 0.85rem; color: var(--text-muted);">Biểu Cước:</span>
+        <select class="tariff-select" id="tariffSelect" onchange="changeTariff()"></select>
+    </div>
+
+    <div class="gps-alert-banner" id="gpsLostBanner">
+        <span><i class="fa-solid fa-triangle-exclamation"></i> Tín hiệu GPS yếu/mất sóng!</span>
+        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="openManualOverride()">Bù trừ</button>
+    </div>
+
+    <div id="map"></div>
+
+    <div class="side-nav">
+        <div class="nav-btn" onclick="openModal('historyModal')"><i class="fa-solid fa-clock-rotate-left"></i></div>
+        <div class="nav-btn" onclick="openModal('statsModal')"><i class="fa-solid fa-chart-pie"></i></div>
+        <div class="nav-btn" onclick="openModal('settingsModal')"><i class="fa-solid fa-gear"></i></div>
+    </div>
+
+    <div class="meter-dashboard">
+        <div class="total-fare-container">
+            <div class="fare-title">Tổng Cước Phí</div>
+            <div class="total-fare" id="totalFareDisplay">0 ₫</div>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="distanceDisplay">0.00</div>
+                <div class="stat-label">Quãng đường (km)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="speedDisplay">0</div>
+                <div class="stat-label">Tốc độ (km/h)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="timeDisplay">00:00</div>
+                <div class="stat-label">Thời gian</div>
+            </div>
+        </div>
+        <div class="control-btns" id="controlButtonsGroup">
+            <button class="btn btn-start" id="btnStart" onclick="startTrip()"><i class="fa-solid fa-play"></i> Bắt đầu chuyến</button>
+        </div>
+    </div>
+
+    <div class="modal-screen" id="invoiceModal">
+        <div class="modal-header">
+            <div class="modal-title">Xử Lý Hóa Đơn</div>
+            <div class="close-btn" onclick="closeModal('invoiceModal')">&times;</div>
+        </div>
+        <div class="form-group">
+            <label>Ngôn ngữ hóa đơn ( xem trước )</label>
+            <select class="form-control" id="invoiceLangSelect" onchange="renderInvoicePreview()">
+                <option value="vi">Tiếng Việt</option>
+                <option value="en">English</option>
+                <option value="zh">中文 (Tiếng Trung)</option>
+                <option value="ko">한국어 (Tiếng Hàn)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Tên khách hàng</label>
+            <input type="text" class="form-control" id="custNameInput" placeholder="Nhập tên khách hàng (không bắt buộc)">
+        </div>
+        <div class="checkbox-group">
+            <input type="checkbox" id="unpaidCheckbox" onchange="toggleDebtState()">
+            <label for="unpaidCheckbox" style="color: var(--warning); font-weight: bold;">Đánh dấu là CHƯA THANH TOÁN (Ghi Nợ)</label>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+            <div class="form-group">
+                <label>Giảm giá trực tiếp (đ)</label>
+                <input type="number" class="form-control" id="discountCash" value="0" oninput="calculateFinalFare()">
+            </div>
+            <div class="form-group">
+                <label>Chiết khấu (%)</label>
+                <input type="number" class="form-control" id="discountPercent" value="0" oninput="calculateFinalFare()">
+            </div>
+        </div>
+
+        <div class="invoice-card" id="invoicePrintArea">
+            </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button class="btn btn-secondary" onclick="exportInvoice('image')"><i class="fa-solid fa-image"></i> Tải Ảnh</button>
+            <button class="btn btn-secondary" onclick="exportInvoice('pdf')"><i class="fa-solid fa-file-pdf"></i> Tải PDF</button>
+        </div>
+        <button class="btn btn-start" style="margin-top: 15px;" id="btnFinalizeTrip" onclick="finalizeTrip()"><i class="fa-solid fa-check"></i> Xác Nhận & Đóng Chuyến</button>
+    </div>
+
+    <div class="modal-screen" id="historyModal">
+        <div class="modal-header">
+            <div class="modal-title">Lịch Sử Chuyến Đi</div>
+            <div class="close-btn" onclick="closeModal('historyModal')">&times;</div>
+        </div>
+        <div class="form-group">
+            <label>Lọc theo thời gian</label>
+            <select class="form-control" id="historyFilterSelect" onchange="renderHistory()">
+                <option value="all">Tất cả</option>
+                <option value="today">Hôm nay</option>
+                <option value="week">Tuần này</option>
+                <option value="month">Tháng này</option>
+            </select>
+        </div>
+        <div id="historyListContainer"></div>
+    </div>
+
+    <div class="modal-screen" id="statsModal">
+        <div class="modal-header">
+            <div class="modal-title">Thống Kê & Công Nợ</div>
+            <div class="close-btn" onclick="closeModal('statsModal')">&times;</div>
+        </div>
+        <div class="stats-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 15px;">
+            <div class="stat-card">
+                <div class="stat-value" id="statTotalRev" style="color:var(--primary-color)">0 ₫</div>
+                <div class="stat-label">Tổng doanh thu</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statUnpaidRev" style="color:var(--danger)">0 ₫</div>
+                <div class="stat-label">Chưa thanh toán (Nợ)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statTripsCount">0</div>
+                <div class="stat-label">Tổng số cuốc</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statTotalKm">0 km</div>
+                <div class="stat-label">Tổng quãng đường</div>
+            </div>
+        </div>
+
+        <h3 style="margin: 15px 0 10px 0; font-size: 1.1rem;">Tổng Hợp Nợ Theo Khách Hàng</h3>
+        <div id="debtByCustomerContainer"></div>
+    </div>
+
+    <div class="modal-screen" id="settingsModal">
+        <div class="modal-header">
+            <div class="modal-title">Cài Đặt Hệ Thống</div>
+            <div class="close-btn" onclick="closeModal('settingsModal')">&times;</div>
+        </div>
+        
+        <h4 style="color:var(--primary-color); margin-bottom: 10px;">7.1 Thông tin xe & tài xế</h4>
+        <div class="form-group"><label>Tên tài xế</label><input type="text" class="form-control" id="cfgDriverName"></div>
+        <div class="form-group"><label>Biển số xe</label><input type="text" class="form-control" id="cfgPlateNumber"></div>
+
+        <h4 style="color:var(--primary-color); margin: 15px 0 10px 0;">7.2 Thông tin thanh toán (VietQR)</h4>
+        <div class="form-group">
+            <label>Ngân hàng / Ví điện tử</label>
+            <select class="form-control" id="cfgBankSelect"></select>
+        </div>
+        <div class="form-group"><label>Số tài khoản / SĐT ví</label><input type="text" class="form-control" id="cfgAccountNo"></div>
+        <div class="form-group"><label>Tên chủ tài khoản</label><input type="text" class="form-control" id="cfgAccountName"></div>
+
+        <h4 style="color:var(--primary-color); margin: 15px 0 10px 0;">7.3 Quản lý giá cước</h4>
+        <div id="tariffConfigList"></div>
+        <button class="btn btn-secondary" style="width: 100%; margin-bottom: 15px;" onclick="addNewTariffConfig()">+ Thêm Cấu Hình Giá</button>
+
+        <h4 style="color:var(--primary-color); margin: 15px 0 10px 0;">7.4 Cài đặt nâng cao</h4>
+        <div class="form-group">
+            <label>Hệ số bù trừ khoảng cách tự động (ví dụ: 1.05 = cộng thêm 5%)</label>
+            <input type="number" step="0.01" class="form-control" id="cfgDistanceFactor" value="1.00">
+        </div>
+        <div class="checkbox-group">
+            <input type="checkbox" id="cfgShowRoute" checked onchange="toggleRouteVisibility()">
+            <label for="cfgShowRoute">Hiển thị trực quan lộ trình trên bản đồ</label>
+        </div>
+
+        <button class="btn btn-start" style="width: 100%; margin-top: 20px;" onclick="saveSettings()">Lưu Cài Đặt</button>
+    </div>
+
+    <div class="modal-screen" id="manualOverrideModal" style="justify-content: center;">
+        <div style="background: var(--card-bg); padding: 20px; border-radius: 16px;">
+            <h3>Bù Trừ Quãng Đường GPS Hụt</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 10px 0;">Hệ thống ước tính số Km bị thiếu dựa trên thời gian mất sóng và vận tốc trung bình.</p>
+            <div class="form-group">
+                <label>Số KM bù trừ thêm:</label>
+                <input type="number" step="0.1" class="form-control" id="manualAddKm">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-start" onclick="applyManualOverride()">Xác nhận bù</button>
+                <button class="btn btn-secondary" onclick="closeModal('manualOverrideModal')">Hủy</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ==========================================================================
+           1. CẤU TRÚC DỮ LIỆU BAN ĐẦU & BIẾN TOÀN CỤC
+           ========================================================================== */
+        const APP_VERSION = "v1.0.0";
+        const USER_AGENT_APP = `EVTaximeter/${APP_VERSION} (https://xiu070806.github.io)`;
+
+        let state = {
+            status: 'IDLE', // IDLE, RUNNING, PAUSED
+            startTime: null,
+            endTime: null,
+            pauseTimeAcc: 0,
+            pauseStart: null,
+            totalDistanceKm: 0,
+            currentSpeed: 0,
+            waitMinutes: 0,
+            path: [], // Danh sách các điểm tọa độ [{lat, lng}]
+            selectedTariffIndex: 0,
+            startAddress: 'Đang lấy địa chỉ đón...',
+            endAddress: 'Đang lấy địa chỉ trả...'
+        };
+
+        let settings = {
+            driverName: "Tài Xế EV",
+            plateNumber: "29A-888.88",
+            bankId: "MB",
+            accountNo: "0999999999",
+            accountName: "NGUYEN VAN A",
+            distanceFactor: 1.00,
+            showRoute: true,
+            tariffs: [
+                { name: "Cước Ngày Standard", ratePerKm: 14000, enableWaitFee: true, freeWaitMins: 5, waitFeePerMin: 1000 },
+                { name: "Cước Đêm / Lễ", ratePerKm: 16000, enableWaitFee: true, freeWaitMins: 3, waitFeePerMin: 1500 }
+            ]
+        };
+
+        let tripsHistory = [];
+        let map, userMarker, polyline;
+        let watchPositionId = null;
+        let timerInterval = null;
+        let wakeLock = null;
+
+        // Dữ liệu bộ lọc GPS 4 lớp
+        let speedBuffer = []; // Smart Dead Reckoning: 30 mẫu gần nhất
+        let lastValidPosition = null;
+        let lastGpsTimestamp = Date.now();
+        let gpsLostTimer = null;
+        let estimatedLostKm = 0;
+
+        // Danh sách Ngân hàng VietQR
+        const VIETNAM_BANKS = [
+            { code: "MB", name: "MBBank - Ngân hàng Quân Đội" },
+            { code: "VCB", name: "Vietcombank - Ngân hàng Ngoại Thương" },
+            { code: "TCB", name: "Techcombank - Ngân hàng Kỹ Thương" },
+            { code: "VPB", name: "VPBank - Ngân hàng Thịnh Vượng" },
+            { code: "ICB", name: "VietinBank - Ngân hàng Công Thương" },
+            { code: "BIDV", name: "BIDV - Ngân hàng Đầu tư và Phát triển" },
+            { code: "MOMO", name: "Ví MoMo" }
+        ];
+
+        // Từ điển đa ngôn ngữ Hóa Đơn
+        const I18N = {
+            vi: { title: "HÓA ĐƠN TIỀN CƯỚC", driver: "Tài xế", plate: "Biển số", start: "Đón", end: "Trả", dist: "Quãng đường", wait: "Thời gian chờ", fare: "Tổng cước", discount: "Giảm giá", total: "Thành tiền", unpaid: "CHƯA THANH TOÁN (GHI NỢ)", scanQR: "Quét mã VietQR để thanh toán" },
+            en: { title: "TAXI RECEIPT", driver: "Driver", plate: "Plate", start: "Pickup", end: "Dropoff", dist: "Distance", wait: "Waiting time", fare: "Subtotal", discount: "Discount", total: "Total Amount", unpaid: "UNPAID (DEBT)", scanQR: "Scan VietQR to pay" },
+            zh: { title: "出租车收据", driver: "司机", plate: "车牌", start: "上车地点", end: "下车地点", dist: "里程", wait: "等候时间", fare: "小计", discount: "折扣", total: "应付金额", unpaid: "未付款 (记账)", scanQR: "扫描 VietQR 支付" },
+            ko: { title: "택시 영수증", driver: "운전기사", plate: "차량 번호", start: "출발지", end: "도착지", dist: "주행 거리", wait: "대기 시간", fare: "소계", discount: "할인", total: "최종 금액", unpaid: "미수금 (외상)", scanQR: "VietQR로 결제" }
+        };
+
+        /* ==========================================================================
+           2. KHỞI TẠO ỨNG DỤNG & BẢN ĐỒ
+           ========================================================================== */
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSavedData();
+            initMap();
+            initGPS();
+            initWakeLock();
+            renderTariffDropdown();
+            populateBankList();
+            restoreActiveTripState();
+
+            // Lắng nghe sự kiện Resume App (Tab visibility)
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+        });
+
+        function loadSavedData() {
+            const savedSettings = localStorage.getItem('EV_SETTINGS');
+            if (savedSettings) settings = JSON.parse(savedSettings);
+
+            const savedHistory = localStorage.getItem('EV_HISTORY');
+            if (savedHistory) tripsHistory = JSON.parse(savedHistory);
+        }
+
+        function initMap() {
+            // Mặc định vị trí Hà Nội nếu chưa có GPS
+            map = L.map('map', { zoomControl: false }).setView([21.028511, 105.804817], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+
+            polyline = L.polyline([], { color: '#00d26a', weight: 5, opacity: 0.8 }).addTo(map);
+        }
+
+        /* ==========================================================================
+           3. THUẬT TOÁN BÙ TRỪ GPS 4 LỚP & ĐỊNH VỊ
+           ========================================================================== */
+        function initGPS() {
+            if (!navigator.geolocation) {
+                updateGPSStatus('lost', 'GPS Không Hỗ Trợ');
+                return;
+            }
+
+            watchPositionId = navigator.geolocation.watchPosition(
+                handleGpsSuccess,
+                handleGpsError,
+                { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+            );
+
+            // Tự động kiểm tra thời gian thực để phát hiện mất sóng
+            setInterval(() => {
+                if (state.status === 'RUNNING' && Date.now() - lastGpsTimestamp > 7000) {
+                    updateGPSStatus('lost', 'Mất Tín Hiệu GPS');
+                    document.getElementById('gpsLostBanner').style.display = 'flex';
+                    
+                    // Lớp 1: Smart Dead Reckoning
+                    let dt = (Date.now() - lastGpsTimestamp) / 1000;
+                    let avgSpeed = speedBuffer.length > 0 ? (speedBuffer.reduce((a,b)=>a+b,0)/speedBuffer.length) : 15;
+                    avgSpeed = Math.max(avgSpeed, 15); // Ngưỡng vận tốc sàn 15 km/h
+                    let addedDistKm = (avgSpeed * (dt / 3600)) * settings.distanceFactor;
+                    
+                    state.totalDistanceKm += addedDistKm / 3600; // Nội suy mượt theo từng giây
+                    estimatedLostKm += addedDistKm;
+                    lastGpsTimestamp = Date.now();
+                    updateUI();
+                }
+            }, 1000);
+        }
+
+        function handleGpsSuccess(position) {
+            let lat = position.coords.latitude;
+            let lng = position.coords.longitude;
+            let accuracy = position.coords.accuracy;
+            let speedKm h = (position.coords.speed || 0) * 3.6;
+
+            updateGPSStatus('active', 'GPS Chính Xác');
+            document.getElementById('gpsLostBanner').style.display = 'none';
+
+            let currentPoint = { lat, lng, time: Date.now() };
+
+            if (state.status === 'RUNNING') {
+                // Lớp 2: App Resume & Jump Filter
+                if (accuracy > 35) return; // Bỏ qua nếu sai số quá lớn
+
+                if (lastValidPosition) {
+                    let d = calculateHaversine(lastValidPosition.lat, lastValidPosition.lng, lat, lng);
+                    let timeDiffSec = (currentPoint.time - lastValidPosition.time) / 1000;
+                    let calcSpeed = (d / timeDiffSec) * 3600;
+
+                    if (calcSpeed > 120) return; // Nhảy số ảo vật lý -> Bỏ qua
+
+                    // Lớp 3: Haversine + 1D Kalman (Làm mượt)
+                    let smoothedDist = d * settings.distanceFactor;
+                    state.totalDistanceKm += smoothedDist;
+                }
+
+                // Cập nhật Speed Buffer 30 mẫu gần nhất
+                speedBuffer.push(speedKm h);
+                if (speedBuffer.length > 30) speedBuffer.shift();
+
+                state.currentSpeed = Math.round(speedKm h);
+                state.path.push([lat, lng]);
+
+                if (settings.showRoute) {
+                    polyline.setLatLngs(state.path);
+                }
+            }
+
+            lastValidPosition = currentPoint;
+            lastGpsTimestamp = Date.now();
+
+            // Cập nhật vị trí trên bản đồ
+            if (!userMarker) {
+                userMarker = L.marker([lat, lng]).addTo(map);
+            } else {
+                userMarker.setLatLng([lat, lng]);
+            }
+            map.panTo([lat, lng]);
+
+            updateUI();
+        }
+
+        function handleGpsError(err) {
+            updateGPSStatus('lost', 'Lỗi GPS');
+        }
+
+        function updateGPSStatus(type, text) {
+            let dot = document.getElementById('gpsDot');
+            let txt = document.getElementById('gpsStatusText');
+            dot.className = 'gps-dot ' + (type === 'active' ? 'active' : 'lost');
+            txt.innerText = text;
+        }
+
+        // Lớp 4: Smart Manual Override
+        function openManualOverride() {
+            document.getElementById('manualAddKm').value = estimatedLostKm.toFixed(2);
+            openModal('manualOverrideModal');
+        }
+
+        function applyManualOverride() {
+            let addKm = parseFloat(document.getElementById('manualAddKm').value) || 0;
+            state.totalDistanceKm += addKm;
+            estimatedLostKm = 0;
+            closeModal('manualOverrideModal');
+            updateUI();
+        }
+
+        // Công thức Haversine tính khoảng cách giữa 2 điểm tọa độ (km)
+        function calculateHaversine(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        /* ==========================================================================
+           4. QUẢN LÝ TIẾN TRÌNH CHUYẾN ĐI & NOMINATIM API
+           ========================================================================== */
+        async function startTrip() {
+            state.status = 'RUNNING';
+            state.startTime = Date.now();
+            state.totalDistanceKm = 0;
+            state.path = [];
+            state.pauseTimeAcc = 0;
+            speedBuffer = [];
+            polyline.setLatLngs([]);
+
+            // Lấy địa chỉ điểm đón bằng Nominatim
+            if (lastValidPosition) {
+                state.startAddress = await fetchAddressFromNominatim(lastValidPosition.lat, lastValidPosition.lng);
+            }
+
+            timerInterval = setInterval(updateTimer, 1000);
+            renderControlButtons();
+            saveActiveTripState();
+        }
+
+        function pauseTrip() {
+            if (state.status === 'RUNNING') {
+                state.status = 'PAUSED';
+                state.pauseStart = Date.now();
+            } else if (state.status === 'PAUSED') {
+                state.status = 'RUNNING';
+                state.pauseTimeAcc += (Date.now() - state.pauseStart);
+                state.pauseStart = null;
+            }
+            renderControlButtons();
+            saveActiveTripState();
+        }
+
+        async function finishTrip() {
+            state.status = 'IDLE';
+            state.endTime = Date.now();
+            clearInterval(timerInterval);
+
+            // Lấy địa chỉ điểm trả bằng Nominatim
+            if (lastValidPosition) {
+                state.endAddress = await fetchAddressFromNominatim(lastValidPosition.lat, lastValidPosition.lng);
+            }
+
+            clearActiveTripState();
+            renderControlButtons();
+            renderInvoicePreview();
+            openModal('invoiceModal');
+        }
+
+        // Gọi API Nominatim OSM tuân thủ User-Agent
+        async function fetchAddressFromNominatim(lat, lng) {
+            try {
+                let res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`, {
+                    headers: { 'User-Agent': USER_AGENT_APP }
+                });
+                let data = await res.json();
+                return data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+            } catch (e) {
+                return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+            }
+        }
+
+        /* ==========================================================================
+           5. TÍNH TOÁN CƯỚC PHÍ & HIỂN THỊ GIAO DIỆN
+           ========================================================================== */
+        function calculateFare() {
+            let activeTariff = settings.tariffs[state.selectedTariffIndex] || settings.tariffs[0];
+            let distanceFare = state.totalDistanceKm * activeTariff.ratePerKm;
+            
+            // Tính phí chờ
+            let waitFare = 0;
+            let totalElapsedMins = Math.floor(getTripDurationSec() / 60);
+            if (activeTariff.enableWaitFee && totalElapsedMins > activeTariff.freeWaitMins) {
+                waitFare = (totalElapsedMins - activeTariff.freeWaitMins) * activeTariff.waitFeePerMin;
+            }
+
+            return Math.round(distanceFare + waitFare);
+        }
+
+        function getTripDurationSec() {
+            if (!state.startTime) return 0;
+            let now = state.endTime || Date.now();
+            let pause = state.pauseTimeAcc + (state.pauseStart ? (now - state.pauseStart) : 0);
+            return Math.floor((now - state.startTime - pause) / 1000);
+        }
+
+        function updateTimer() {
+            if (state.status === 'RUNNING') {
+                let sec = getTripDurationSec();
+                let m = Math.floor(sec / 60).toString().padStart(2, '0');
+                let s = (sec % 60).toString().padStart(2, '0');
+                document.getElementById('timeDisplay').innerText = `${m}:${s}`;
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('totalFareDisplay').innerText = calculateFare().toLocaleString('vi-VN') + ' ₫';
+            document.getElementById('distanceDisplay').innerText = state.totalDistanceKm.toFixed(2);
+            document.getElementById('speedDisplay').innerText = state.currentSpeed;
+        }
+
+        function renderControlButtons() {
+            let container = document.getElementById('controlButtonsGroup');
+            if (state.status === 'IDLE') {
+                container.innerHTML = `<button class="btn btn-start" onclick="startTrip()"><i class="fa-solid fa-play"></i> Bắt đầu chuyến</button>`;
+            } else {
+                let pauseText = state.status === 'PAUSED' ? 'Tiếp tục' : 'Tạm dừng';
+                container.innerHTML = `
+                    <button class="btn btn-pause" onclick="pauseTrip()"><i class="fa-solid fa-pause"></i> ${pauseText}</button>
+                    <button class="btn btn-finish" onclick="finishTrip()"><i class="fa-solid fa-stop"></i> Hoàn thành</button>
+                `;
+            }
+        }
+
+        /* ==========================================================================
+           6. QUẢN LÝ HÓA ĐƠN & TẠO MÃ VIETQR
+           ========================================================================== */
+        function renderInvoicePreview() {
+            let lang = document.getElementById('invoiceLangSelect').value;
+            let t = I18N[lang] || I18N.vi;
+            let isUnpaid = document.getElementById('unpaidCheckbox').checked;
+            
+            let baseFare = calculateFare();
+            let discountCash = parseFloat(document.getElementById('discountCash').value) || 0;
+            let discountPercent = parseFloat(document.getElementById('discountPercent').value) || 0;
+            let finalFare = Math.max(0, (baseFare - discountCash) * (1 - discountPercent / 100));
+
+            let qrUrl = `https://img.vietqr.io/image/${settings.bankId}-${settings.accountNo}-compact2.png?amount=${finalFare}&addInfo=CuocTaxi&accountName=${encodeURIComponent(settings.accountName)}`;
+
+            let html = `
+                <h2>${t.title}</h2>
+                <div class="invoice-divider"></div>
+                <p><strong>${t.driver}:</strong> ${settings.driverName} | <strong>${t.plate}:</strong> ${settings.plateNumber}</p>
+                <p><strong>${t.start}:</strong> ${state.startAddress}</p>
+                <p><strong>${t.end}:</strong> ${state.endAddress}</p>
+                <p><strong>${t.dist}:</strong> ${state.totalDistanceKm.toFixed(2)} km</p>
+                <div class="invoice-divider"></div>
+                <p><strong>${t.fare}:</strong> ${baseFare.toLocaleString('vi-VN')} ₫</p>
+                ${(discountCash > 0 || discountPercent > 0) ? `<p><strong>${t.discount}:</strong> -${discountCash}đ (${discountPercent}%)</p>` : ''}
+                <h3 style="margin-top:10px; text-align:right;">${t.total}: ${Math.round(finalFare).toLocaleString('vi-VN')} ₫</h3>
+            `;
+
+            if (isUnpaid) {
+                html += `<div style="text-align:center; color:red; font-weight:bold; margin-top:15px;">[ ${t.unpaid} ]</div>`;
+            } else {
+                html += `
+                    <div class="qr-container">
+                        <img src="${qrUrl}" alt="VietQR">
+                        <p style="font-size:0.75rem; color:#666; margin-top:5px;">${t.scanQR}</p>
+                    </div>
+                `;
+            }
+
+            document.getElementById('invoicePrintArea').innerHTML = html;
+        }
+
+        function toggleDebtState() {
+            renderInvoicePreview();
+        }
+
+        function calculateFinalFare() {
+            renderInvoicePreview();
+        }
+
+        function finalizeTrip() {
+            let isUnpaid = document.getElementById('unpaidCheckbox').checked;
+            let custName = document.getElementById('custNameInput').value.trim() || 'Khách Lẻ';
+            
+            let baseFare = calculateFare();
+            let discountCash = parseFloat(document.getElementById('discountCash').value) || 0;
+            let discountPercent = parseFloat(document.getElementById('discountPercent').value) || 0;
+            let finalFare = Math.max(0, (baseFare - discountCash) * (1 - discountPercent / 100));
+
+            let tripRecord = {
+                id: Date.now(),
+                custName: custName,
+                driverName: settings.driverName,
+                plateNumber: settings.plateNumber,
+                startTime: state.startTime,
+                endTime: state.endTime,
+                startAddress: state.startAddress,
+                endAddress: state.endAddress,
+                distanceKm: state.totalDistanceKm,
+                finalFare: Math.round(finalFare),
+                status: isUnpaid ? 'UNPAID' : 'PAID'
+            };
+
+            tripsHistory.unshift(tripRecord);
+            localStorage.setItem('EV_HISTORY', JSON.stringify(tripsHistory));
+
+            closeModal('invoiceModal');
+            resetMeter();
+            alert('Chuyến đi đã được lưu thành công!');
+        }
+
+        function resetMeter() {
+            state.status = 'IDLE';
+            state.totalDistanceKm = 0;
+            state.currentSpeed = 0;
+            state.path = [];
+            polyline.setLatLngs([]);
+            document.getElementById('timeDisplay').innerText = "00:00";
+            updateUI();
+            renderControlButtons();
+        }
+
+        /* ==========================================================================
+           7. XUẤT HÓA ĐƠN (PDF / ẢNH)
+           ========================================================================== */
+        function exportInvoice(type) {
+            let element = document.getElementById('invoicePrintArea');
+            if (type === 'image') {
+                html2canvas(element).then(canvas => {
+                    let link = document.createElement('a');
+                    link.download = `HoaDon_${Date.now()}.png`;
+                    link.href = canvas.toDataURL();
+                    link.click();
+                });
+            } else if (type === 'pdf') {
+                let opt = { margin: 10, filename: `HoaDon_${Date.now()}.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' } };
+                html2pdf().set(opt).from(element).save();
+            }
+        }
+
+        /* ==========================================================================
+           8. LỊCH SỬ & THỐNG KÊ CÔNG NỢ
+           ========================================================================== */
+        function renderHistory() {
+            let filter = document.getElementById('historyFilterSelect').value;
+            let container = document.getElementById('historyListContainer');
+            container.innerHTML = '';
+
+            let filtered = tripsHistory.filter(t => {
+                if (filter === 'all') return true;
+                let tripDate = new Date(t.startTime);
+                let now = new Date();
+                if (filter === 'today') return tripDate.toDateString() === now.toDateString();
+                return true;
+            });
+
+            filtered.forEach(item => {
+                let statusBadge = item.status === 'PAID' 
+                    ? `<span style="color:var(--primary-color)">[Đã thanh toán]</span>` 
+                    : `<span style="color:var(--danger)">[Chưa thanh toán]</span>`;
+                
+                let div = document.createElement('div');
+                div.style.cssText = "background:rgba(255,255,255,0.05); padding:12px; border-radius:10px; margin-bottom:10px;";
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between;">
+                        <strong>${item.custName}</strong>
+                        ${statusBadge}
+                    </div>
+                    <p style="font-size:0.8rem; color:var(--text-muted);">${new Date(item.startTime).toLocaleString('vi-VN')}</p>
+                    <p style="font-size:0.9rem; margin-top:5px;">Quãng đường: ${item.distanceKm.toFixed(2)} km -> <strong>${item.finalFare.toLocaleString('vi-VN')} ₫</strong></p>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderStats() {
+            let totalRev = 0, unpaidRev = 0, totalKm = 0;
+            let customerDebts = {};
+
+            tripsHistory.forEach(t => {
+                totalRev += t.finalFare;
+                totalKm += t.distanceKm;
+                if (t.status === 'UNPAID') {
+                    unpaidRev += t.finalFare;
+                    customerDebts[t.custName] = (customerDebts[t.custName] || 0) + t.finalFare;
+                }
+            });
+
+            document.getElementById('statTotalRev').innerText = totalRev.toLocaleString('vi-VN') + ' ₫';
+            document.getElementById('statUnpaidRev').innerText = unpaidRev.toLocaleString('vi-VN') + ' ₫';
+            document.getElementById('statTripsCount').innerText = tripsHistory.length;
+            document.getElementById('statTotalKm').innerText = totalKm.toFixed(1) + ' km';
+
+            // Tổng hợp nợ theo khách
+            let debtContainer = document.getElementById('debtByCustomerContainer');
+            debtContainer.innerHTML = '';
+            for (let cust in customerDebts) {
+                let div = document.createElement('div');
+                div.style.cssText = "background:rgba(255,255,255,0.05); padding:12px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;";
+                div.innerHTML = `
+                    <div>
+                        <strong>${cust}</strong><br>
+                        <span style="color:var(--danger); font-size:0.9rem;">Tổng nợ: ${customerDebts[cust].toLocaleString('vi-VN')} ₫</span>
+                    </div>
+                    <button class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem;" onclick="exportCustomerDebtBill('${cust}', ${customerDebts[cust]})">Xuất Hóa Đơn Nợ</button>
+                `;
+                debtContainer.appendChild(div);
+            }
+        }
+
+        function exportCustomerDebtBill(custName, amount) {
+            let qrUrl = `https://img.vietqr.io/image/${settings.bankId}-${settings.accountNo}-compact2.png?amount=${amount}&addInfo=ThanhToanNo_${encodeURIComponent(custName)}`;
+            let win = window.open('', '_blank');
+            win.document.write(`
+                <html><head><title>Hóa Đơn Tổng Nợ - ${custName}</title></head>
+                <body style="font-family:sans-serif; text-align:center; padding:30px;">
+                    <h2>BẢNG THỦ CÔNG TỔNG HỢP CÔNG NỢ</h2>
+                    <p>Khách hàng: <strong>${custName}</strong></p>
+                    <h1 style="color:red;">Tổng nợ: ${amount.toLocaleString('vi-VN')} ₫</h1>
+                    <img src="${qrUrl}" style="max-width:250px; margin-top:20px;">
+                    <p>Quét mã VietQR để thanh toán tổng công nợ</p>
+                </body></html>
+            `);
+        }
+
+        /* ==========================================================================
+           9. CÀI ĐẶT HỆ THỐNG & WAKE LOCK
+           ========================================================================== */
+        function populateBankList() {
+            let select = document.getElementById('cfgBankSelect');
+            select.innerHTML = '';
+            VIETNAM_BANKS.forEach(b => {
+                let opt = document.createElement('option');
+                opt.value = b.code;
+                opt.innerText = b.name;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderTariffDropdown() {
+            let select = document.getElementById('tariffSelect');
+            select.innerHTML = '';
+            settings.tariffs.forEach((t, index) => {
+                let opt = document.createElement('option');
+                opt.value = index;
+                opt.innerText = `${t.name} (${t.ratePerKm.toLocaleString('vi-VN')}đ/km)`;
+                select.appendChild(opt);
+            });
+        }
+
+        function changeTariff() {
+            state.selectedTariffIndex = parseInt(document.getElementById('tariffSelect').value);
+            updateUI();
+        }
+
+        function openModal(id) {
+            if (id === 'settingsModal') fillSettingsForm();
+            if (id === 'historyModal') renderHistory();
+            if (id === 'statsModal') renderStats();
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function fillSettingsForm() {
+            document.getElementById('cfgDriverName').value = settings.driverName;
+            document.getElementById('cfgPlateNumber').value = settings.plateNumber;
+            document.getElementById('cfgBankSelect').value = settings.bankId;
+            document.getElementById('cfgAccountNo').value = settings.accountNo;
+            document.getElementById('cfgAccountName').value = settings.accountName;
+            document.getElementById('cfgDistanceFactor').value = settings.distanceFactor;
+            document.getElementById('cfgShowRoute').checked = settings.showRoute;
+        }
+
+        function saveSettings() {
+            settings.driverName = document.getElementById('cfgDriverName').value;
+            settings.plateNumber = document.getElementById('cfgPlateNumber').value;
+            settings.bankId = document.getElementById('cfgBankSelect').value;
+            settings.accountNo = document.getElementById('cfgAccountNo').value;
+            settings.accountName = document.getElementById('cfgAccountName').value;
+            settings.distanceFactor = parseFloat(document.getElementById('cfgDistanceFactor').value) || 1.0;
+            settings.showRoute = document.getElementById('cfgShowRoute').checked;
+
+            localStorage.setItem('EV_SETTINGS', JSON.stringify(settings));
+            renderTariffDropdown();
+            closeModal('settingsModal');
+            alert('Đã lưu cài đặt!');
+        }
+
+        async function initWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) {}
+        }
+
+        function handleVisibilityChange() {
+            if (document.visibilityState === 'visible') {
+                initWakeLock();
+            }
+        }
+
+        function saveActiveTripState() {
+            if (state.status === 'RUNNING' || state.status === 'PAUSED') {
+                localStorage.setItem('EV_ACTIVE_TRIP', JSON.stringify(state));
+            }
+        }
+
+        function restoreActiveTripState() {
+            let saved = localStorage.getItem('EV_ACTIVE_TRIP');
+            if (saved) {
+                state = JSON.parse(saved);
+                if (state.status === 'RUNNING') {
+                    timerInterval = setInterval(updateTimer, 1000);
+                }
+                renderControlButtons();
+                updateUI();
+            }
+        }
+
+        function clearActiveTripState() {
+            localStorage.removeItem('EV_ACTIVE_TRIP');
+        }
+    </script>
+</body>
+</html>
