@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0d12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>TAXIMET PRO</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--text:#111318;--muted:#707784;--line:#e5e7eb;--accent:#111827;--green:#0a9f5b;--red:#d92d20;--orange:#e98519;--blue:#2563eb;--nav:76px}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+body{min-height:100dvh}.app{width:100%;max-width:520px;margin:auto;min-height:100dvh;padding:env(safe-area-inset-top) 14px calc(var(--nav) + env(safe-area-inset-bottom) + 12px)}
+header{display:flex;justify-content:space-between;align-items:center;padding:10px 2px 8px}.brand{font-weight:900;letter-spacing:-.5px;font-size:21px}.gps{font-size:12px;font-weight:700;padding:7px 10px;border-radius:999px;background:#eee;color:#666}.gps.ok{background:#dcfce7;color:#087443}.gps.bad{background:#fee2e2;color:#b42318}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:14px;margin:9px 0;box-shadow:0 5px 20px #00000008}
+.row{display:flex;gap:9px;align-items:center}.between{justify-content:space-between}.grow{flex:1}
+select,input,button,textarea{font:inherit}select,input{width:100%;border:1px solid var(--line);background:#fafafa;border-radius:13px;padding:11px 12px;outline:none}button{border:0;border-radius:15px;padding:12px 14px;font-weight:800;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}
+.smallbtn{padding:9px 11px;border:1px solid var(--line);background:#fff;font-size:12px}.dark{background:#111318;color:white}.green{background:var(--green);color:#fff}.red{background:var(--red);color:#fff}.blue{background:var(--blue);color:#fff}.ghost{background:#f2f3f5}.danger{color:var(--red)}
+.label{font-size:11px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.5px}.fare{text-align:center;padding:15px 10px}.fare .amount{font-size:50px;font-weight:950;letter-spacing:-2px;line-height:1.05}.fare .currency{font-size:13px;color:var(--muted);font-weight:800}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.metric{background:#f7f7f8;border-radius:16px;padding:12px;text-align:center}.metric b{display:block;font-size:18px;margin-top:3px}.metric span{font-size:11px;color:var(--muted);font-weight:700}
+.point{display:grid;grid-template-columns:48px 1fr;gap:10px;align-items:center}.pin{width:44px;height:44px;border-radius:14px;background:#f0f1f3;display:grid;place-items:center;font-size:20px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions button{min-height:58px;font-size:16px}.actions .full{grid-column:1/-1}
+.status{font-size:12px;font-weight:800}.status.running{color:var(--green)}.status.paused{color:var(--orange)}
+.bottom{position:fixed;z-index:30;left:50%;transform:translateX(-50%);bottom:0;width:min(520px,100%);padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:#ffffffeb;backdrop-filter:blur(18px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.bottom button{background:transparent;color:#6b7280;padding:9px 3px;font-size:11px}.bottom button.active{color:#111318;background:#f0f1f3}
+.page{display:none}.page.active{display:block}.hidden{display:none!important}
+.sheet{position:fixed;z-index:50;inset:0;background:#0007;display:flex;align-items:flex-end}.sheet>div{width:min(520px,100%);margin:auto;background:#fff;border-radius:25px 25px 0 0;max-height:88dvh;overflow:auto;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+.sheet h2{margin:0 0 14px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}.field{margin:9px 0}.field label{display:block;font-size:12px;font-weight:800;margin:0 0 6px}.delta{padding:10px 12px;border-radius:12px;background:#f5f5f5;font-weight:900;margin-top:8px}.delta.plus{color:var(--green)}.delta.minus{color:var(--red)}
+.list{display:grid;gap:9px}.item{border:1px solid var(--line);border-radius:17px;padding:12px;background:#fff}.item .top{display:flex;justify-content:space-between;gap:10px}.pill{display:inline-block;font-size:10px;font-weight:900;padding:5px 8px;border-radius:999px;background:#eee}.paid{background:#dcfce7;color:#087443}.debt{background:#fee2e2;color:#b42318}
+.modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}.invoice{background:#fff;color:#111;padding:18px;border:1px solid #ddd}.invoice h1{text-align:center;margin:0;font-size:23px}.invoice h2{text-align:center;font-size:15px;margin:5px 0 15px}.invgrid{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #ddd}.invgrid div{padding:7px 0;border-bottom:1px solid #eee;font-size:12px}.invgrid div:nth-child(odd){font-weight:700}.total{font-size:22px;font-weight:950;text-align:right;padding-top:12px}.muted{color:var(--muted)}.chart{height:170px;display:flex;align-items:end;gap:5px;padding:12px 4px 0}.bar{flex:1;background:#222;border-radius:8px 8px 2px 2px;min-height:3px}.bar small{display:block;text-align:center;transform:translateY(18px);font-size:9px;color:#777}
+hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+.toast{position:fixed;z-index:100;left:50%;transform:translateX(-50%);bottom:92px;background:#111;color:#fff;border-radius:13px;padding:11px 14px;font-size:12px;font-weight:700;opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1}
+@media(max-width:370px){.fare .amount{font-size:43px}.actions button{min-height:52px}.card{border-radius:19px}}
+
+/* Complete build additions */
+.full{width:100%}.tag{font-size:10px;font-weight:900;color:#666}.section-title{font-size:13px;font-weight:900;margin:4px 0 8px}
+.qrbox{display:grid;place-items:center;padding:12px;background:#fff;border:1px dashed #ccc;border-radius:16px;margin-top:10px}.qrbox img{width:210px;height:210px;image-rendering:pixelated}
+.invoice-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px}
+.debt-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.invoice-print{width:794px;min-height:1123px;margin:auto;background:white;padding:42px;font-family:Arial,sans-serif}
+.invoice-print h1{text-align:center;font-size:30px}.invoice-print h2{text-align:center;font-size:18px}
+.invoice-print table{width:100%;border-collapse:collapse;font-size:13px;margin-top:18px}.invoice-print td{padding:7px;border-bottom:1px solid #ddd}.invoice-print td:first-child{font-weight:bold;width:34%}.invoice-print .grand{font-size:22px;font-weight:900;text-align:right;padding-top:18px}
+@media print{body{background:#fff}.app,.sheet>div:not(.print-host){display:none!important}.print-host{display:block!important;position:static!important;width:794px!important;max-height:none!important;overflow:visible!important}.invoice-print{display:block!important}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="brand">🚕 TAXIMET PRO</div><div id="gpsBadge" class="gps bad">GPS: CHƯA CÓ</div></header>
+
+<main id="home" class="page active">
+  <div class="card">
+    <div class="row">
+      <div class="grow"><div class="label">Biểu cước</div><select id="tariffSelect"></select></div>
+      <button class="smallbtn" id="adjustBtn">Điều chỉnh<br>giá</button>
+    </div>
+  </div>
+
+  <div class="card fare">
+    <div class="label">TỔNG CƯỚC</div>
+    <div id="fare" class="amount">0</div><div class="currency">VNĐ</div>
+    <div id="tripStatus" class="status">SẴN SÀNG</div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><span>QUÃNG ĐƯỜNG</span><b id="distance">0.00 km</b></div>
+    <div class="metric"><span>TỐC ĐỘ</span><b id="speed">0.0</b><span>km/h</span></div>
+    <div class="metric"><span>THỜI GIAN</span><b id="duration">00:00</b></div>
+  </div>
+
+  <div class="card">
+    <div class="point"><div class="pin">📍</div><div><div class="label">Điểm đón</div><div id="pickup">Chưa có</div></div></div>
+    <hr>
+    <div class="point"><div class="pin">🏁</div><div><div class="label">Điểm trả</div><div id="dropoff">Chưa có</div></div></div>
+  </div>
+
+  <div class="card actions" id="idleActions">
+    <button class="dark full" id="startBtn">BẮT ĐẦU CHUYẾN</button>
+  </div>
+  <div class="card actions hidden" id="runActions">
+    <button class="ghost" id="pauseBtn">TẠM DỪNG</button><button class="red" id="finishBtn">HOÀN THÀNH</button>
+  </div>
+  <div class="card actions hidden" id="pausedActions">
+    <button class="green" id="resumeBtn">TIẾP TỤC</button><button class="red" id="finishPausedBtn">HOÀN THÀNH</button>
+  </div>
+</main>
+
+<section id="history" class="page"><div class="card"><div class="row between"><h2>Lịch sử</h2><select id="historyFilter" style="width:auto"><option value="all">Tất cả</option><option value="paid">Đã thu</option><option value="debt">Ghi nợ</option></select></div><div id="historyList" class="list"></div></div></section>
+
+<section id="debt" class="page"><div class="card"><h2>Công nợ</h2><div id="debtList" class="list"></div></div></section>
+
+<section id="stats" class="page"><div class="card"><h2>Thống kê</h2><select id="statsRange"><option value="today">Hôm nay</option><option value="7">7 ngày</option><option value="month">Tháng</option><option value="all">Tất cả</option></select><div class="metrics" style="margin-top:10px"><div class="metric"><span>DOANH THU</span><b id="statRevenue">0</b></div><div class="metric"><span>CHUYẾN</span><b id="statTrips">0</b></div><div class="metric"><span>CÔNG NỢ</span><b id="statDebt">0</b></div></div><div id="chart" class="chart"></div></div></section>
+
+<section id="settings" class="page"><div class="card"><h2>Cài đặt</h2>
+  <div class="field"><label>Tên tài xế</label><input id="driverName"></div><div class="field"><label>Biển số xe</label><input id="plate"></div>
+  <hr><h3>Phí chờ</h3><div class="grid2"><div class="field"><label>Bật/tắt</label><select id="waitingEnabled"><option value="true">Bật</option><option value="false">Tắt</option></select></div><div class="field"><label>Miễn phí (phút)</label><input id="freeWait" type="number" min="0"></div><div class="field"><label>Giá/phút</label><input id="waitRate" type="number" min="0"></div><div class="field"><label>Ngưỡng km/h</label><input id="waitSpeed" type="number" min="0" step=".1"></div></div>
+  <hr><h3>GPS / Google</h3><div class="field"><label>Hệ số DR (chỉ điều chỉnh confidence)</label><input id="drFactor" type="number" min=".5" max="2" step=".05"></div><div class="field"><label>Google Routes API Key</label><input id="routesKey" type="password" autocomplete="off"></div><div class="field"><label>Google Geocoding API Key</label><input id="geoKey" type="password" autocomplete="off"></div><p class="muted" style="font-size:11px">Khóa API được lưu cục bộ trên thiết bị. Production nên đưa request Google qua backend/proxy để tránh lộ key.</p>
+  <hr><h3>Google / GPS nâng cao</h3>
+<div class="field"><label>Bật Google Routes hỗ trợ gap</label><select id="routesEnabled"><option value="true">Bật</option><option value="false">Tắt</option></select></div>
+<div class="field"><label>Giới hạn DR tối đa (giây)</label><input id="drMaxSec" type="number" min="5" max="120"></div>
+<hr><h3>VietQR</h3><div class="grid2"><div class="field"><label>Ngân hàng</label><input id="bank"></div><div class="field"><label>Số tài khoản</label><input id="account"></div></div><div class="field"><label>Chủ tài khoản</label><input id="accountName"></div>
+  <hr><h3>Biểu cước</h3><div id="tariffEditor" class="list"></div><button class="smallbtn" id="addTariff">+ Thêm biểu cước</button>
+  <hr><button class="dark" id="saveSettings" style="width:100%">LƯU CÀI ĐẶT</button>
+</div></section>
+
+<nav class="bottom">
+<button data-page="home" class="active">⌂<br>Chuyến</button><button data-page="history">▤<br>Lịch sử</button><button data-page="debt">₫<br>Công nợ</button><button data-page="stats">◔<br>Thống kê</button><button data-page="settings">⚙<br>Cài đặt</button>
+</nav>
+</div>
+
+<div id="adjustSheet" class="sheet hidden"><div><h2>Điều chỉnh giá</h2>
+<div class="field"><label>Giảm trực tiếp (VNĐ)</label><input id="discountFixed" type="number" min="0" value="0"></div>
+<div class="field"><label>Chiết khấu (%)</label><input id="discountPct" type="number" min="0" max="100" step=".1" value="0"></div>
+<div class="field"><label>Phụ phí (VNĐ)</label><input id="surcharge" type="number" min="0" value="0"></div>
+<div class="field"><label>Cầu đường (VNĐ)</label><input id="toll" type="number" min="0" value="0"></div>
+<div id="delta" class="delta">0 đ</div><div class="modal-actions"><button class="ghost" onclick="closeSheet('adjustSheet')">Hủy</button><button class="dark" id="applyAdjust">Xác nhận</button></div>
+</div></div>
+
+<div id="finishSheet" class="sheet hidden"><div><h2>🎉 Chúc mừng hoàn thành</h2><div id="finishSummary"></div><div class="modal-actions"><button class="green" id="cashPay">💵 Tiền mặt</button><button class="blue" id="transferPay">🏦 Chuyển khoản</button><button class="ghost full" id="debtPay" style="grid-column:1/-1">🧾 Ghi nợ</button></div><div id="paymentExtra"></div></div></div>
+
+<div id="invoiceSheet" class="sheet hidden"><div><div class="row between"><h2>Xem hóa đơn</h2><select id="invoiceLang" style="width:auto"><option value="vi">🇻🇳 Tiếng Việt</option><option value="en">🇬🇧 English</option><option value="zh">中文</option></select></div><div id="invoice"></div><div class="modal-actions"><button id="pngBtn" class="dark">PNG</button><button id="printBtn" class="ghost">PDF / In</button></div><button class="ghost" style="width:100%;margin-top:9px" onclick="closeSheet('invoiceSheet')">Đóng</button></div></div>
+
+<div id="printHost" class="hidden"></div>
+<div id="toast" class="toast"></div>
+
+<script>
+const KEY='taximetpro.v1';
+const defaultState={
+ settings:{driverName:'',plate:'',waitingEnabled:true,freeWait:3,waitRate:1000,waitSpeed:3,drFactor:1,routesKey:'',geoKey:'',routesEnabled:true,drMaxSec:45,bank:'',account:'',accountName:''},
+ tariffs:[
+  {id:'standard',name:'Tiêu chuẩn',base:12000,perKm:12000,waitRate:1000},
+  {id:'night',name:'Ban đêm',base:15000,perKm:14000,waitRate:1200}
+ ],
+ trips:[], current:null
+};
+let S=load(), watchId=null, wakeLock=null, timer=null, pendingTrip=null, invoiceTrip=null;
+
+function load(){try{return {...structuredClone(defaultState),...JSON.parse(localStorage.getItem(KEY))}}catch{return structuredClone(defaultState)}}
+function save(){localStorage.setItem(KEY,JSON.stringify(S))}
+function money(n){return Math.round(n||0).toLocaleString('vi-VN')+' đ'}
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1800)}
+function currentTariff(){return S.tariffs.find(x=>x.id===S.current?.tariffId)||S.tariffs[0]}
+function hav(a,b){const R=6371000,dLat=(b.lat-a.lat)*Math.PI/180,dLon=(b.lon-a.lon)*Math.PI/180;const q=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(q))}
+function fmtDuration(ms){let s=Math.floor(ms/1000),h=Math.floor(s/3600);s%=3600;let m=Math.floor(s/60);s%=60;return (h?String(h).padStart(2,'0')+':':'')+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')}
+function fmtPoint(p){return p?`${p.lat.toFixed(6)}, ${p.lon.toFixed(6)}`:'Chưa có'}
+function gpsQuality(p){return p && Number.isFinite(p.accuracy) && p.accuracy<=80 && Number.isFinite(p.lat)&&Number.isFinite(p.lon)}
+function setGps(ok,text){const e=document.getElementById('gpsBadge');e.className='gps '+(ok?'ok':'bad');e.textContent='GPS: '+text}
+function page(id){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.bottom button').forEach(x=>x.classList.toggle('active',x.dataset.page===id));if(id==='history')renderHistory();if(id==='debt')renderDebt();if(id==='stats')renderStats();if(id==='settings')renderSettings()}
+
+document.querySelectorAll('.bottom button').forEach(b=>b.onclick=()=>page(b.dataset.page));
+document.getElementById('tariffSelect').onchange=e=>{if(S.current){S.current.tariffId=e.target.value;save();render()}};
+document.getElementById('adjustBtn').onclick=()=>openSheet('adjustSheet');
+['discountFixed','discountPct','surcharge','toll'].forEach(id=>document.getElementById(id).oninput=previewAdjust);
+document.getElementById('applyAdjust').onclick=()=>{if(!S.current)return closeSheet('adjustSheet');S.current.adjust={fixed:+discountFixed.value||0,pct:+discountPct.value||0,surcharge:+surcharge.value||0,toll:+toll.value||0};save();closeSheet('adjustSheet');render()};
+document.getElementById('startBtn').onclick=startTrip;
+document.getElementById('pauseBtn').onclick=pauseTrip;
+document.getElementById('resumeBtn').onclick=resumeTrip;
+document.getElementById('finishBtn').onclick=finishTrip;
+document.getElementById('finishPausedBtn').onclick=finishTrip;
+
+function openSheet(id){document.getElementById(id).classList.remove('hidden')}
+function closeSheet(id){document.getElementById(id).classList.add('hidden')}
+function previewAdjust(){let t=currentTariff(),c=S.current||{distance:0,adjust:{fixed:0,pct:0,surcharge:0,toll:0}};let base=t.base+(c.distance||0)*t.perKm;let fixed=+discountFixed.value||0,pct=+discountPct.value||0,add=(+surcharge.value||0)+(+toll.value||0);let d=add-fixed-(base*pct/100);let e=document.getElementById('delta');e.textContent=(d>=0?'+':'−')+money(Math.abs(d));e.className='delta '+(d>=0?'plus':'minus')}
+
+async function acquireWake(){try{if('wakeLock'in navigator)wakeLock=await navigator.wakeLock.request('screen')}catch{}}
+function stopGPS(){if(watchId!==null&&navigator.geolocation)navigator.geolocation.clearWatch(watchId);watchId=null}
+function startGPS(){if(!navigator.geolocation){setGps(false,'KHÔNG HỖ TRỢ');return}stopGPS();watchId=navigator.geolocation.watchPosition(onGPS,()=>{setGps(false,'MẤT TÍN HIỆU');if(S.current&&S.current.status==='RUNNING'){S.current.gap=S.current.gap||newGap();save()}},{enableHighAccuracy:true,maximumAge:1500,timeout:12000})}
+function newGap(){return {id:crypto.randomUUID?.()||String(Date.now()),startedAt:Date.now(),lastGood:S.current?.lastGood||null,committed:false,recovery:[],baseDistance:S.current?.distance||0,source:'pending'}}
+function onGPS(pos){
+ const p={lat:pos.coords.latitude,lon:pos.coords.longitude,accuracy:pos.coords.accuracy,speed:Number.isFinite(pos.coords.speed)?Math.max(0,pos.coords.speed*3.6):null,t:pos.timestamp||Date.now()};
+ if(!gpsQuality(p)){setGps(false,'ĐỘ CHÍNH XÁC THẤP');return}
+ setGps(true,Math.round(p.accuracy)+'m');
+ if(!S.current||S.current.status!=='RUNNING')return;
+ const c=S.current;
+ if(c.gap&&!c.gap.committed){
+   c.gap.recovery.push(p);
+   resolveGap(c,p);
+ } else if(c.lastGood){
+   const d=hav(c.lastGood,p);
+   // Reject impossible GPS jumps. Threshold combines speed and accuracy.
+   const dt=Math.max(0,(p.t-c.lastGood.t)/1000), vmax=Math.max(45,(c.lastGood.speed||p.speed||35)*1.8);
+   const maxDist=Math.max(120, vmax*dt/3.6 + c.lastGood.accuracy + p.accuracy);
+   if(d<=maxDist && d>=Math.max(0,(c.lastGood.accuracy+p.accuracy)*0.15)) c.distance+=d/1000;
+   c.lastGood=p;c.trail=(c.trail||[]).slice(-80);c.trail.push(p);
+ }
+ c.lastGPS=p;c.speed=p.speed??c.speed??0;c.gpsGoodAt=Date.now();
+ if(S.settings.waitingEnabled && c.status==='RUNNING' && (p.speed??99)<=S.settings.waitSpeed){c.waitSeconds=(c.waitSeconds||0)+Math.max(0,(p.t-(c.lastSpeedSampleAt||p.t))/1000)}else if(c) c.waitSeconds=c.waitSeconds||0;
+ c.lastSpeedSampleAt=p.t;c.waitMinutes=(c.waitSeconds||0)/60;c.waitFee=Math.max(0,c.waitMinutes-S.settings.freeWait)*S.settings.waitRate;
+ save();render();
+}
+async function resolveGap(c,recovery){
+ const g=c.gap;if(!g||g.committed||!recovery?.length)return;
+ const a=g.lastGood||c.lastGood, z=recovery[recovery.length-1];
+ if(!a){g.committed=true;c.lastGood=z;c.gap=null;return}
+ const elapsed=Math.max(0,(z.t-a.t)/1000);
+ const points=[a,...recovery];
+ let gpsMeters=0, usable=0;
+ for(let i=1;i<points.length;i++){
+   const d=hav(points[i-1],points[i]);
+   const dt=Math.max(0,(points[i].t-points[i-1].t)/1000);
+   const vmax=Math.max(45,(points[i-1].speed||z.speed||35)*1.8);
+   const limit=Math.max(120,vmax*dt/3.6+points[i-1].accuracy+points[i].accuracy);
+   if(d<=Math.max(2500,limit)){gpsMeters+=d;usable++}
+ }
+ const lastSpeed=Math.max(0,a.speed??c.speed??0);
+ const maxSec=Math.max(5,Math.min(120,S.settings.drMaxSec||45));
+ const drTime=Math.min(elapsed,maxSec);
+ const drMeters=Math.min(lastSpeed/3.6*drTime, Math.min(1500,elapsed*45/3.6));
+ const drConfidence=Math.max(.2,Math.min(1,S.settings.drFactor||1));
+ let routeMeters=null, routeConfidence=0;
+ if(S.settings.routesEnabled!==false && S.settings.routesKey && usable===0){
+   const route=await googleRouteMeters(a,z);
+   if(Number.isFinite(route)){routeMeters=route;routeConfidence=.55}
+ }
+ // GPS recovery is primary. Routes is only a candidate. DR is only a bounded candidate.
+ let chosen=0,source='none';
+ if(usable>0 && gpsMeters>0){
+   chosen=Math.min(gpsMeters, Math.max(1500,elapsed*90/3.6)); source='gps-recovery';
+ }else if(Number.isFinite(routeMeters)){
+   const physicalMax=Math.max(300,elapsed*Math.max(45,lastSpeed*1.5)/3.6+100);
+   chosen=Math.min(routeMeters,physicalMax); source='google-candidate';
+ }else if(drConfidence>.5 && drMeters>0){
+   chosen=drMeters; source='dead-reckoning';
+ }
+ const maxPhysical=Math.max(300,elapsed*Math.max(45,lastSpeed*1.5)/3.6+Math.max(a.accuracy,z.accuracy));
+ chosen=Math.min(Math.max(0,chosen),maxPhysical);
+ c.distance+=chosen/1000;
+ c.gap={...g,committed:true,committedAt:Date.now(),meters:chosen,source,routeMeters:routeMeters??null,drCandidate:drMeters,confidence:source==='gps-recovery'?1:source==='google-candidate'?routeConfidence:drConfidence};
+ c.lastGood=z;c.lastGPS=z;c.gap=null;
+ save();render();
+}
+async function googleRouteMeters(a,z){
+ try{
+   const url='https://routes.googleapis.com/directions/v2:computeRoutes';
+   const body={origin:{location:{latLng:{latitude:a.lat,longitude:a.lon}}},destination:{location:{latLng:{latitude:z.lat,longitude:z.lon}}},travelMode:'DRIVE',routingPreference:'TRAFFIC_UNAWARE',polylineQuality:'OVERVIEW',units:'METRIC'};
+   const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':S.settings.routesKey,'X-Goog-FieldMask':'routes.distanceMeters,routes.duration'},body:JSON.stringify(body)});
+   if(!r.ok)return null;const j=await r.json();return Number(j.routes?.[0]?.distanceMeters);
+ }catch{return null}
+}
+
+async function geocode(p){
+ if(!p)return 'Chưa có';
+ const key=S.settings.geoKey||S.settings.routesKey;
+ if(!key)return fmtPoint(p);
+ try{const u=`https://maps.googleapis.com/maps/api/geocode/json?latlng=${p.lat},${p.lon}&key=${encodeURIComponent(key)}&language=vi`;const r=await fetch(u);const j=await r.json();return j.results?.[0]?.formatted_address||fmtPoint(p)}catch{return fmtPoint(p)}
+}
+async function startTrip(){
+ if(S.current)return;
+ if(!navigator.geolocation)return toast('Thiết bị không hỗ trợ GPS');
+ const pos=await getPosition().catch(()=>null);if(!pos)return toast('Chưa lấy được GPS chính xác');
+ const t=currentTariff();const now=Date.now();
+ S.current={id:'TRIP-'+new Date(now).toLocaleString('vi-VN',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric'}).replace(/[/: ]/g,''),startedAt:now,status:'RUNNING',tariffId:t.id,distance:0,speed:0,lastGood:pos,lastGPS:pos,pickup:pos,dropoff:null,trail:[pos],gap:null,adjust:{fixed:0,pct:0,surcharge:0,toll:0},pausedMs:0};
+ save();startGPS();acquireWake();startTimer();render();toast('Đã bắt đầu chuyến');
+}
+function getPosition(){return new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(p=>gpsQuality({lat:p.coords.latitude,lon:p.coords.longitude,accuracy:p.coords.accuracy,speed:p.coords.speed? p.coords.speed*3.6:null,t:p.timestamp||Date.now()})?res({lat:p.coords.latitude,lon:p.coords.longitude,accuracy:p.coords.accuracy,speed:Number.isFinite(p.coords.speed)?p.coords.speed*3.6:null,t:p.timestamp||Date.now()}):rej(),rej,{enableHighAccuracy:true,maximumAge:0,timeout:15000})}
+function pauseTrip(){if(!S.current)return;S.current.status='PAUSED';S.current.pauseAt=Date.now();if(S.current.gap){S.current.gap.committed=true;S.current.gap=null}stopGPS();save();render()}
+function resumeTrip(){if(!S.current||S.current.status!=='PAUSED')return;S.current.pausedMs+=(Date.now()-S.current.pauseAt);S.current.status='RUNNING';S.current.pauseAt=null;save();startGPS();getPosition().then(p=>{S.current.lastGood=p;S.current.lastGPS=p;save();render()}).catch(()=>{});render()}
+async function finishTrip(){
+ if(!S.current)return;
+ if(S.current.status==='RUNNING'){
+   const p=await getPosition().catch(()=>null);
+   if(p)onGPS({coords:{latitude:p.lat,longitude:p.lon,accuracy:p.accuracy,speed:p.speed? p.speed/3.6:null},timestamp:p.t});
+   else if(S.current.lastGood)S.current.gap=S.current.gap||newGap();
+ }
+ stopGPS();clearInterval(timer);
+ const c=S.current;c.status='FINISHED';c.dropoff=c.lastGood||c.lastGPS||c.pickup;c.finishedAt=Date.now();c.durationMs=Math.max(0,c.finishedAt-c.startedAt-c.pausedMs-(c.pauseAt?c.finishedAt-c.pauseAt:0));
+ if(c.gap&&!c.gap.committed){
+   const finalP=await getPosition().catch(()=>null);
+   if(finalP){
+     c.gap.recovery=[finalP];
+     await resolveGap(c, c.gap.recovery);
+   } else {
+     c.gap.committed=true;
+     c.gap=null;
+   }
+ }
+ c.totalFare=calcFare(c);pendingTrip=c;save();render();showFinish(c)
+}
+function calcFare(c){
+ const t=S.tariffs.find(x=>x.id===c.tariffId)||S.tariffs[0],a=c.adjust||{fixed:0,pct:0,surcharge:0,toll:0};
+ let base=t.base+c.distance*t.perKm;
+ let wait=S.settings.waitingEnabled?Math.max(0,c.waitFee||0):0;
+ return Math.max(0,Math.round(base+wait+a.surcharge+a.toll-a.fixed-(base*a.pct/100)));
+}
+function showFinish(c){document.getElementById('finishSummary').innerHTML=`<div class="card" style="margin:0"><div class="fare"><div class="label">${c.tripCode||c.id}</div><div class="amount" style="font-size:40px">${money(c.totalFare)}</div><div>${c.distance.toFixed(2)} km · ${fmtDuration(c.durationMs)}</div></div></div>`;openSheet('finishSheet')}
+function completePayment(method){
+ const c=pendingTrip;if(!c)return;
+ if(method==='debt'){const n=prompt('Tên khách hàng ghi nợ:');if(!n)return;c.customer=n;c.payment='DEBT';c.status='UNPAID'}
+ else {c.payment=method;c.status='PAID';c.customer='';}
+ c.finishedAt=Date.now();
+ c.tripCode=c.id;
+ c.paidAt=c.status==='PAID'?Date.now():null;
+ S.trips.unshift(c);S.current=null;pendingTrip=null;save();closeSheet('finishSheet');invoiceTrip=c;render();showInvoice(c)
+}
+document.getElementById('cashPay').onclick=()=>completePayment('CASH');
+document.getElementById('transferPay').onclick=()=>completePayment('TRANSFER');
+document.getElementById('debtPay').onclick=()=>completePayment('debt');
+
+function showInvoice(c){renderInvoice();openSheet('invoiceSheet')}
+document.getElementById('invoiceLang').onchange=()=>{localStorage.setItem('taximetpro.invoiceLang',invoiceLang.value);renderInvoice()};
+
+function vietqrUrl(c){
+ const bank=encodeURIComponent(S.settings.bank||'');const acc=encodeURIComponent(S.settings.account||'');
+ const name=encodeURIComponent(S.settings.accountName||'');const amount=Math.round(c.totalFare||0);
+ const addInfo=encodeURIComponent('TAXIMET PRO '+(c.tripCode||c.id));
+ // VietQR image endpoint; bank field may be bank BIN/name depending on provider.
+ return `https://img.vietqr.io/image/${bank}-${acc}-compact2.png?amount=${amount}&addInfo=${addInfo}&accountName=${name}`;
+}
+function paymentLabel(c){
+ return c.status==='UNPAID'?'UNPAID / DEBT':c.payment==='TRANSFER'?'PAID / TRANSFER':'PAID / CASH';
+}
+function invoiceRows(c,text,t){
+ const adj=(c.adjust?.surcharge||0)+(c.adjust?.toll||0)-(c.adjust?.fixed||0);
+ return [
+  [text.date,new Date(c.finishedAt).toLocaleString()],
+  ['Trip ID',c.tripCode||c.id],
+  [text.driver,S.settings.driverName||'—'],[text.plate,S.settings.plate||'—'],
+  [text.customer,c.customer||'—'],[text.payment,paymentLabel(c)],
+  [text.pickup,fmtPoint(c.pickup)],[text.drop,fmtPoint(c.dropoff)],
+  [text.tariff,t.name],[text.gps,(c.distance-c.gapKm||c.distance).toFixed(3)+' km'],
+  [text.gap,(c.gapKm||0).toFixed(3)+' km'],[text.dist,c.distance.toFixed(3)+' km'],
+  [text.time,fmtDuration(c.durationMs)],[text.wait,money(c.waitFee||0)],[text.adjust,money(adj)]
+ ];
+}
+async function exportInvoicePNG(){
+ const node=document.querySelector('#invoice .invoice'); if(!node)return;
+ const w=900,h=Math.max(1000,node.scrollHeight+80);
+ const xml=new XMLSerializer().serializeToString(node);
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml" style="width:${w}px;background:white;padding:30px;box-sizing:border-box;font-family:Arial,sans-serif">${xml}</div></foreignObject></svg>`;
+ const blob=new Blob([svg],{type:'image/svg+xml'}),url=URL.createObjectURL(blob),img=new Image();
+ img.onload=()=>{const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0);cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(invoiceTrip?.tripCode||'taximet-invoice')+'.png';a.click();URL.revokeObjectURL(a.href);URL.revokeObjectURL(url)},'image/png')};img.src=url;
+}
+function printInvoiceA4(){
+ const c=invoiceTrip;if(!c)return;
+ const t=S.tariffs.find(x=>x.id===c.tariffId)||S.tariffs[0];
+ const labels={vi:{title:'HÓA ĐƠN DỊCH VỤ TAXI',date:'Ngày giờ',driver:'Tài xế',plate:'Biển số',customer:'Khách hàng',payment:'Thanh toán',pickup:'Điểm đón',drop:'Điểm trả',tariff:'Biểu cước',gps:'Km GPS thực tế',gap:'Km bù GPS',dist:'Tổng km',time:'Thời gian',wait:'Phí chờ',adjust:'Điều chỉnh',total:'TỔNG TIỀN'},en:{title:'TAXI SERVICE INVOICE',date:'Date & time',driver:'Driver',plate:'Vehicle',customer:'Customer',payment:'Payment',pickup:'Pickup',drop:'Drop-off',tariff:'Tariff',gps:'GPS distance',gap:'GPS compensation',dist:'Total distance',time:'Duration',wait:'Waiting fee',adjust:'Adjustment',total:'TOTAL'},zh:{title:'出租车服务发票',date:'日期时间',driver:'司机',plate:'车牌',customer:'乘客',payment:'付款',pickup:'上车点',drop:'下车点',tariff:'计价表',gps:'GPS实际里程',gap:'GPS补偿里程',dist:'总里程',time:'用时',wait:'等候费',adjust:'调整',total:'总计'}}[invoiceLang.value];
+ const rows=invoiceRows(c,labels,t);
+ document.getElementById('printHost').innerHTML=`<div class="invoice-print"><h1>TAXIMET PRO</h1><h2>${labels.title}</h2><table>${rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table><div class="grand">${labels.total}: ${money(c.totalFare)}</div></div>`;
+ document.getElementById('printHost').classList.remove('hidden');window.print();setTimeout(()=>document.getElementById('printHost').classList.add('hidden'),1000);
+}
+function renderInvoice(){
+ const c=invoiceTrip;if(!c)return;const l=invoiceLang.value,t=S.tariffs.find(x=>x.id===c.tariffId)||S.tariffs[0];
+ const text={vi:{title:'HÓA ĐƠN DỊCH VỤ TAXI',date:'Ngày giờ',driver:'Tài xế',plate:'Biển số',customer:'Khách hàng',payment:'Thanh toán',pickup:'Điểm đón',drop:'Điểm trả',tariff:'Biểu cước',gps:'Km GPS thực tế',gap:'Km bù GPS',dist:'Tổng km',time:'Thời gian',wait:'Phí chờ',adjust:'Điều chỉnh',total:'TỔNG TIỀN'},en:{title:'TAXI SERVICE INVOICE',date:'Date & time',driver:'Driver',plate:'Vehicle',customer:'Customer',payment:'Payment',pickup:'Pickup',drop:'Drop-off',tariff:'Tariff',gps:'GPS distance',gap:'GPS compensation',dist:'Total distance',time:'Duration',wait:'Waiting fee',adjust:'Adjustment',total:'TOTAL'},zh:{title:'出租车服务发票',date:'日期时间',driver:'司机',plate:'车牌',customer:'乘客',payment:'付款',pickup:'上车点',drop:'下车点',tariff:'计价表',gps:'GPS实际里程',gap:'GPS补偿里程',dist:'总里程',time:'用时',wait:'等候费',adjust:'调整',total:'总计'}}[l];
+ const rows=invoiceRows(c,text,t);
+ const qr=(c.status==='UNPAID'&&S.settings.bank&&S.settings.account)?`<div class="qrbox"><img alt="VietQR" src="${vietqrUrl(c)}"><div style="font-size:11px;font-weight:800;margin-top:6px">Thanh toán công nợ · ${money(c.totalFare)}</div></div>`:'';
+ document.getElementById('invoice').innerHTML=`<div class="invoice"><h1>TAXIMET PRO</h1><h2>${text.title}</h2><div class="invgrid">${rows.map(r=>`<div>${r[0]}</div><div>${r[1]}</div>`).join('')}</div><div class="total">${text.total}: ${money(c.totalFare)}</div>${qr}</div>
+ <div class="invoice-actions"><button class="dark" id="invoicePng">PNG</button><button class="ghost" id="invoicePdf">PDF</button><button class="ghost" id="invoiceShare">Chia sẻ</button></div>`;
+ document.getElementById('invoicePng').onclick=exportInvoicePNG;
+ document.getElementById('invoicePdf').onclick=printInvoiceA4;
+ document.getElementById('invoiceShare').onclick=async()=>{try{await navigator.share({title:'TAXIMET PRO '+(c.tripCode||c.id),text:`${text.title}\n${money(c.totalFare)}\n${c.distance.toFixed(2)} km`})}catch{}};
+}
+
+function render(){
+ const c=S.current,t=currentTariff();document.getElementById('tariffSelect').innerHTML=S.tariffs.map(x=>`<option value="${x.id}" ${x.id===t.id?'selected':''}>${x.name} · ${money(x.perKm)}/km</option>`).join('');
+ if(c){document.getElementById('distance').textContent=c.distance.toFixed(2)+' km';document.getElementById('speed').textContent=(c.speed||0).toFixed(1);document.getElementById('duration').textContent=fmtDuration(c.durationMs||calcElapsed(c));document.getElementById('pickup').textContent=fmtPoint(c.pickup);document.getElementById('dropoff').textContent=fmtPoint(c.dropoff);document.getElementById('fare').textContent=money(calcFare(c));document.getElementById('tripStatus').textContent=c.status==='RUNNING'?'ĐANG CHẠY':'TẠM DỪNG';document.getElementById('tripStatus').className='status '+(c.status==='RUNNING'?'running':'paused');document.getElementById('idleActions').classList.add('hidden');document.getElementById('runActions').classList.toggle('hidden',c.status!=='RUNNING');document.getElementById('pausedActions').classList.toggle('hidden',c.status!=='PAUSED')}
+ else {document.getElementById('fare').textContent='0';document.getElementById('distance').textContent='0.00 km';document.getElementById('speed').textContent='0.0';document.getElementById('duration').textContent='00:00';document.getElementById('pickup').textContent='Chưa có';document.getElementById('dropoff').textContent='Chưa có';document.getElementById('tripStatus').textContent='SẴN SÀNG';document.getElementById('tripStatus').className='status';document.getElementById('idleActions').classList.remove('hidden');document.getElementById('runActions').classList.add('hidden');document.getElementById('pausedActions').classList.add('hidden')}
+}
+function calcElapsed(c){return Math.max(0,(c.pauseAt||Date.now())-c.startedAt-(c.pausedMs||0))}
+function startTimer(){clearInterval(timer);timer=setInterval(()=>{if(S.current&&S.current.status==='RUNNING'){document.getElementById('duration').textContent=fmtDuration(calcElapsed(S.current));document.getElementById('fare').textContent=money(calcFare({...S.current,durationMs:calcElapsed(S.current)}))}},1000)}
+function renderHistory(){const f=document.getElementById('historyFilter').value;const a=S.trips.filter(x=>f==='all'||(f==='paid'&&x.status==='PAID')||(f==='debt'&&x.status==='UNPAID'));document.getElementById('historyList').innerHTML=a.length?a.map(c=>`<div class="item"><div class="top"><b>${c.id}</b><span class="pill ${c.status==='PAID'?'paid':'debt'}">${c.status}</span></div><div>${money(c.totalFare)} · ${c.distance.toFixed(2)} km · ${new Date(c.finishedAt).toLocaleString()}</div><div class="muted">${c.customer||'Khách lẻ'} · ${c.payment||'—'}</div><button class="smallbtn" onclick="openPastInvoice('${c.id}')">Xem hóa đơn</button></div>`).join(''):'<p class="muted">Chưa có chuyến hoàn thành.</p>'}
+document.getElementById('historyFilter').onchange=renderHistory;
+function openPastInvoice(id){invoiceTrip=S.trips.find(x=>x.id===id);showInvoice(invoiceTrip)}
+function renderDebt(){
+ const m={};S.trips.filter(x=>x.status==='UNPAID').forEach(c=>(m[c.customer||'Không tên']??=[]).push(c));
+ document.getElementById('debtList').innerHTML=Object.keys(m).length?Object.entries(m).map(([n,a])=>`
+ <div class="item"><div class="top"><b>${n}</b><b>${money(a.reduce((s,x)=>s+x.totalFare,0))}</b></div>
+ ${a.map(x=>`<label style="display:block;padding:7px 0;border-top:1px solid #eee"><input type="checkbox" class="debtPick" value="${x.id}" style="width:auto"> ${x.id} — ${money(x.totalFare)}</label>`).join('')}
+ <div class="debt-actions"><button class="smallbtn" onclick="settleCustomer('${encodeURIComponent(n)}')">Tất toán tất cả</button><button class="smallbtn" onclick="makeDebtInvoice('${encodeURIComponent(n)}')">Hóa đơn tổng hợp</button></div></div>`).join(''):'<p class="muted">Không có công nợ.</p>';
+}
+function selectedDebtTrips(){const ids=[...document.querySelectorAll('.debtPick:checked')].map(x=>x.value);return S.trips.filter(x=>ids.includes(x.id)&&x.status==='UNPAID')}
+function settleCustomer(enc){const n=decodeURIComponent(enc);const a=S.trips.filter(x=>x.status==='UNPAID'&&(x.customer||'Không tên')===n);const m=prompt('Hình thức: CASH hoặc TRANSFER','CASH');if(!m||!['CASH','TRANSFER'].includes(m.toUpperCase()))return;a.forEach(c=>{c.status='PAID';c.payment=m.toUpperCase();c.paidAt=Date.now()});save();renderDebt();renderStats();toast('Đã tất toán '+a.length+' chuyến')}
+function makeDebtInvoice(enc){
+ const n=decodeURIComponent(enc),a=S.trips.filter(x=>x.status==='UNPAID'&&(x.customer||'Không tên')===n);if(!a.length)return;
+ const total=a.reduce((s,x)=>s+x.totalFare,0);
+ invoiceTrip={...a[0],tripCode:'DEBT-'+Date.now(),totalFare:total,distance:a.reduce((s,x)=>s+x.distance,0),durationMs:a.reduce((s,x)=>s+x.durationMs,0),customer:n,status:'UNPAID',payment:'DEBT',_debtTrips:a};
+ showInvoice(invoiceTrip);
+}
+
+function settleDebt(id){const c=S.trips.find(x=>x.id===id);if(!c)return;const m=prompt('Hình thức: CASH hoặc TRANSFER','CASH');if(!m||!['CASH','TRANSFER'].includes(m.toUpperCase()))return;c.status='PAID';c.payment=m.toUpperCase();save();renderDebt();toast('Đã tất toán')}
+function renderStats(){const now=Date.now(),r=statsRange.value;let a=S.trips.filter(x=>{if(r==='all')return true;let d=r==='today'?1:r==='7'?7:31;return now-x.finishedAt<d*86400000});let paid=a.filter(x=>x.status==='PAID');document.getElementById('statRevenue').textContent=money(paid.reduce((s,x)=>s+x.totalFare,0));document.getElementById('statTrips').textContent=a.length;document.getElementById('statDebt').textContent=money(a.filter(x=>x.status==='UNPAID').reduce((s,x)=>s+x.totalFare,0));let max=Math.max(1,...a.map(x=>x.totalFare));document.getElementById('chart').innerHTML=a.slice(0,14).reverse().map(x=>`<div class="bar" style="height:${Math.max(4,x.totalFare/max*135)}px" title="${money(x.totalFare)}"><small>${new Date(x.finishedAt).getDate()}</small></div>`).join('')}
+document.getElementById('statsRange').onchange=renderStats;
+
+function renderSettings(){
+ const s=S.settings;['driverName','plate','freeWait','waitRate','waitSpeed','drFactor','routesKey','geoKey','routesEnabled','drMaxSec','bank','account','accountName'].forEach(k=>document.getElementById(k).value=s[k]??'');document.getElementById('waitingEnabled').value=String(s.waitingEnabled);
+ document.getElementById('routesEnabled').value=String(s.routesEnabled!==false);
+ document.getElementById('drMaxSec').value=s.drMaxSec||45;
+ document.getElementById('tariffEditor').innerHTML=S.tariffs.map((t,i)=>`<div class="item"><div class="grid2"><input data-ti="${i}" data-k="name" value="${t.name}"><input data-ti="${i}" data-k="base" type="number" value="${t.base}"><input data-ti="${i}" data-k="perKm" type="number" value="${t.perKm}"><button class="smallbtn danger" onclick="deleteTariff(${i})">Xóa</button></div></div>`).join('');
+ document.querySelectorAll('[data-ti]').forEach(e=>e.oninput=()=>{const t=S.tariffs[+e.dataset.ti];t[e.dataset.k]=e.dataset.k==='name'?e.value:+e.value;save();populateTariffs()});
+}
+function populateTariffs(){document.getElementById('tariffSelect').innerHTML=S.tariffs.map(x=>`<option value="${x.id}">${x.name} · ${money(x.perKm)}/km</option>`).join('')}
+function deleteTariff(i){if(S.tariffs.length<=1)return toast('Phải có ít nhất 1 biểu cước');S.tariffs.splice(i,1);save();renderSettings();populateTariffs()}
+document.getElementById('addTariff').onclick=()=>{S.tariffs.push({id:'t'+Date.now(),name:'Biểu cước mới',base:10000,perKm:10000,waitRate:1000});save();renderSettings();populateTariffs()};
+document.getElementById('saveSettings').onclick=()=>{const s=S.settings;['driverName','plate','freeWait','waitRate','waitSpeed','drFactor','routesKey','geoKey','routesEnabled','drMaxSec','bank','account','accountName'].forEach(k=>s[k]=['driverName','plate','routesKey','geoKey','bank','account','accountName'].includes(k)?document.getElementById(k).value:(k==='routesEnabled'?document.getElementById(k).value==='true':+document.getElementById(k).value||0));s.waitingEnabled=document.getElementById('waitingEnabled').value==='true';save();toast('Đã lưu cài đặt')};
+
+document.getElementById('invoiceLang').value=localStorage.getItem('taximetpro.invoiceLang')||'vi';
+
+
+document.addEventListener('visibilitychange',async()=>{if(document.visibilityState==='visible'){if(S.current){startGPS();if(S.current.status==='RUNNING')acquireWake();const p=await getPosition().catch(()=>null);if(p&&S.current.status==='RUNNING'){onGPS({coords:{latitude:p.lat,longitude:p.lon,accuracy:p.accuracy,speed:p.speed?p.speed/3.6:null},timestamp:p.t})}}}});
+window.addEventListener('pagehide',()=>{if(S.current){if(S.current.status==='RUNNING')S.current.gap=S.current.gap||newGap();save()}});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+if(S.current){startGPS();if(S.current.status==='RUNNING')startTimer()}
+render();
+</script>
+</body>
+</html>
