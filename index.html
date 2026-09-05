@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07131c">
+<title>TAXIMET PRO</title>
+<style>
+:root{--bg:#06131b;--card:#0d202a;--card2:#102a35;--line:#1d3b46;--txt:#eef8fa;--muted:#8faab2;--teal:#22d3b6;--blue:#43a9ff;--red:#ff5e68;--amber:#ffc857;--green:#35d07f}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+body{min-height:100vh}.app{width:min(100%,520px);margin:auto;min-height:100vh;padding:12px 14px calc(82px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.brand{display:flex;gap:10px;align-items:center}.logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,#123b45,#0b242d);display:grid;place-items:center;font-size:20px}.brand b{display:block;font-size:17px;letter-spacing:.4px}.brand small{color:var(--muted)}.gps{border:1px solid var(--line);border-radius:20px;padding:7px 10px;font-size:12px;color:var(--muted)}.gps.ok{color:var(--green);border-color:#246a53}
+main>section{display:none}.page.active{display:block}.card{background:linear-gradient(160deg,var(--card),#0a1b24);border:1px solid var(--line);border-radius:18px;padding:12px;margin-bottom:10px;box-shadow:0 8px 24px #0003}.row{display:flex;gap:8px}.row>*{flex:1}.label{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}.select,.input{width:100%;background:#091923;color:var(--txt);border:1px solid var(--line);border-radius:11px;padding:11px;font-size:14px;outline:none}.mini{font-size:12px;color:var(--muted)}button{border:0;color:var(--txt);font:inherit;cursor:pointer}.btn{width:100%;padding:13px 12px;border-radius:13px;background:#16323d;border:1px solid var(--line);font-weight:700}.btn.primary{background:var(--teal);color:#04211e;border-color:var(--teal)}.btn.danger{background:var(--red);color:#fff}.btn.blue{background:var(--blue);color:#041a2b}.btn.amber{background:var(--amber);color:#281d00}.btn:disabled{opacity:.45;cursor:not-allowed}.fare{text-align:center;padding:17px 10px}.fare .amount{font-size:45px;font-weight:850;letter-spacing:-2px}.fare .unit{color:var(--muted);font-size:12px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.metric{background:#091923;border:1px solid var(--line);border-radius:13px;padding:10px}.metric b{font-size:20px;display:block;margin-top:3px}.route{display:grid;gap:10px}.routeLine{display:flex;gap:10px}.dot{width:10px;height:10px;border-radius:50%;margin-top:4px;background:var(--teal);flex:none}.dot.end{background:var(--red)}.routeLine strong{display:block;font-size:13px}.routeLine span{display:block;color:var(--muted);font-size:12px;margin-top:3px;line-height:1.35}.state{font-size:12px;text-align:center;color:var(--muted);padding:4px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.actions.single{grid-template-columns:1fr}.toolbar{display:flex;gap:8px;align-items:center}.toolbar>*{flex:1}.list{display:grid;gap:8px}.item{background:#091923;border:1px solid var(--line);border-radius:13px;padding:11px}.itemTop{display:flex;justify-content:space-between;gap:10px}.badge{font-size:10px;padding:4px 7px;border-radius:8px;background:#16333d}.badge.paid{color:var(--green)}.badge.debt{color:var(--amber)}.nav{position:fixed;z-index:20;left:50%;bottom:0;transform:translateX(-50%);width:min(100%,520px);padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:#07131bee;backdrop-filter:blur(16px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.nav button{background:transparent;color:var(--muted);padding:7px 3px;border-radius:11px;font-size:11px}.nav button.active{color:var(--teal);background:#0d292f}.nav b{display:block;font-size:16px;margin-bottom:2px}.overlay{position:fixed;inset:0;background:#0009;z-index:50;display:none;align-items:flex-end;justify-content:center}.overlay.show{display:flex}.sheet{width:min(100%,520px);max-height:92vh;overflow:auto;background:#0a1a23;border:1px solid var(--line);border-radius:22px 22px 0 0;padding:15px 14px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -12px 40px #0008}.sheet h2{font-size:18px;margin:3px 0 13px}.close{float:right;background:#17303a;border-radius:10px;padding:6px 10px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field{margin-bottom:9px}.field label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.delta{font-weight:800;text-align:center;padding:9px;border-radius:11px;background:#08151d;margin:9px 0}.table{width:100%;border-collapse:collapse;font-size:12px}.table th,.table td{padding:8px 4px;border-bottom:1px solid var(--line);text-align:left}.invoice{background:#fff;color:#182027;border-radius:8px;padding:18px;margin:8px 0;font-family:Arial,sans-serif}.invoice h1{font-size:20px;margin:0}.invoice .irow{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-bottom:1px solid #e8ecee}.invoice .total{font-size:24px;font-weight:800;text-align:right;padding-top:10px}.invoice small{color:#64727b}.empty{padding:25px;text-align:center;color:var(--muted)}.sectionTitle{font-size:13px;font-weight:800;margin:14px 0 8px}.settingsGroup{margin-bottom:12px}.dangerText{color:var(--red)}@media(max-width:360px){.fare .amount{font-size:38px}.metric b{font-size:17px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="brand"><div class="logo">🚕</div><div><b>TAXIMET PRO</b><small>Đơn giản • Chính xác • Chuyên nghiệp</small></div></div>
+  <div id="gpsPill" class="gps">● GPS chưa sẵn sàng</div>
+</header>
+<main>
+<section id="page-meter" class="page active">
+  <div class="card">
+    <div class="row">
+      <div><div class="label">Biểu cước</div><select id="tariffSel" class="select"></select></div>
+      <div style="max-width:145px"><div class="label">Điều chỉnh</div><button class="btn" onclick="openAdjust()">+0 đ</button></div>
+    </div>
+  </div>
+  <div class="card fare"><div class="label">TỔNG CƯỚC</div><div id="fare" class="amount">0 đ</div><div class="unit">VNĐ</div></div>
+  <div class="metrics">
+    <div class="metric"><div class="label">Quãng đường</div><b id="km">0.00</b><span class="mini">km</span></div>
+    <div class="metric"><div class="label">Tốc độ</div><b id="speed">0</b><span class="mini">km/h</span></div>
+    <div class="metric"><div class="label">Thời gian</div><b id="time">00:00</b><span class="mini">phút:giây</span></div>
+  </div>
+  <div class="card route">
+    <div class="routeLine"><i class="dot"></i><div><strong>ĐIỂM ĐÓN</strong><span id="pickup">Chưa xác định</span></div></div>
+    <div class="routeLine"><i class="dot end"></i><div><strong>ĐIỂM TRẢ</strong><span id="dropoff">Chưa xác định</span></div></div>
+  </div>
+  <div id="state" class="state">Sẵn sàng bắt đầu chuyến</div>
+  <div id="actions" class="actions single"><button class="btn primary" onclick="startTrip()">▶ BẮT ĐẦU CHUYẾN</button></div>
+</section>
+
+<section id="page-history" class="page">
+  <div class="card"><div class="toolbar"><select id="historyFilter" class="select" onchange="renderHistory()"><option value="all">Tất cả</option><option value="paid">Đã thu</option><option value="debt">Ghi nợ</option></select><button class="btn" onclick="openDebt()">Công nợ</button></div></div>
+  <div id="historyList" class="list"></div>
+</section>
+
+<section id="page-revenue" class="page">
+  <div class="card"><div class="toolbar"><select id="revFilter" class="select" onchange="renderRevenue()"><option value="all">Tất cả</option><option value="today">Hôm nay</option><option value="7">7 ngày</option><option value="month">Tháng</option></select></div></div>
+  <div id="revenueBox"></div>
+</section>
+
+<section id="page-settings" class="page">
+  <div class="card">
+    <div class="sectionTitle">Thông tin tài xế</div>
+    <div class="grid2"><div class="field"><label>Tên tài xế</label><input id="driver" class="input"></div><div class="field"><label>Biển số xe</label><input id="plate" class="input"></div></div>
+  </div>
+  <div class="card">
+    <div class="sectionTitle">Biểu cước</div>
+    <div id="tariffEditor"></div>
+    <button class="btn" onclick="addTariff()">＋ Thêm biểu cước</button>
+  </div>
+  <div class="card">
+    <div class="sectionTitle">Phí chờ & GPS</div>
+    <div class="grid2">
+      <div class="field"><label>Phí chờ</label><select id="waitEnabled" class="select"><option value="1">Bật</option><option value="0">Tắt</option></select></div>
+      <div class="field"><label>Ngưỡng tốc độ (km/h)</label><input id="waitSpeed" class="input" type="number" step=".1"></div>
+      <div class="field"><label>Miễn phí (phút)</label><input id="waitFree" class="input" type="number"></div>
+      <div class="field"><label>Giá/phút</label><input id="waitRate" class="input" type="number"></div>
+      <div class="field"><label>Hệ số DR / trọng số</label><input id="drFactor" class="input" type="number" step=".05"></div>
+      <div class="field"><label>Giới hạn tốc độ DR</label><input id="drMax" class="input" type="number" step=".1"></div>
+    </div>
+    <div class="mini">Hệ số DR chỉ thay đổi trọng số, không nhân trực tiếp vào km.</div>
+  </div>
+  <div class="card">
+    <div class="sectionTitle">Google Routes & địa chỉ</div>
+    <div class="field"><label>Google API Key (tuỳ chọn)</label><input id="googleKey" class="input" type="password" placeholder="Dùng Routes / Geocoding khi có key"></div>
+  </div>
+  <div class="card">
+    <div class="sectionTitle">VietQR ngân hàng</div>
+    <div class="grid2"><div class="field"><label>Mã ngân hàng</label><input id="bank" class="input" placeholder="VD: VCB"></div><div class="field"><label>Số tài khoản</label><input id="account" class="input"></div></div>
+    <div class="field"><label>Chủ tài khoản</label><input id="holder" class="input"></div>
+  </div>
+  <button class="btn primary" onclick="saveSettings()">LƯU CÀI ĐẶT</button>
+</section>
+</main>
+<nav class="nav">
+<button class="active" data-page="meter" onclick="go('meter')"><b>◉</b>Đồng hồ</button>
+<button data-page="history" onclick="go('history')"><b>▤</b>Lịch sử</button>
+<button data-page="revenue" onclick="go('revenue')"><b>▥</b>Doanh thu</button>
+<button data-page="settings" onclick="go('settings')"><b>⚙</b>Cài đặt</button>
+</nav>
+</div>
+
+<div id="adjustOverlay" class="overlay"><div class="sheet">
+<button class="close" onclick="closeOverlay('adjustOverlay')">✕</button><h2>Điều chỉnh giá</h2>
+<div class="grid2">
+<div class="field"><label>Giảm trực tiếp (đ)</label><input id="adjDirect" class="input" type="number" oninput="updateDelta()"></div>
+<div class="field"><label>Chiết khấu (%)</label><input id="adjPct" class="input" type="number" step=".1" oninput="updateDelta()"></div>
+<div class="field"><label>Phụ phí (đ)</label><input id="adjSurcharge" class="input" type="number" oninput="updateDelta()"></div>
+<div class="field"><label>Cầu đường (đ)</label><input id="adjToll" class="input" type="number" oninput="updateDelta()"></div>
+</div><div id="delta" class="delta">Thay đổi: +0 đ</div><button class="btn primary" onclick="confirmAdjust()">XÁC NHẬN</button>
+</div></div>
+
+<div id="finishOverlay" class="overlay"><div class="sheet">
+<button class="close" onclick="closeOverlay('finishOverlay')">✕</button><h2>Chúc mừng hoàn thành 🎉</h2>
+<div id="finishSummary"></div><div class="grid2">
+<button class="btn primary" onclick="payCash()">💵 Tiền mặt</button>
+<button class="btn blue" onclick="payTransfer()">🏦 Chuyển khoản</button>
+</div><button class="btn amber" style="margin-top:8px" onclick="payDebt()">▧ Ghi nợ</button>
+</div></div>
+
+<div id="transferOverlay" class="overlay"><div class="sheet">
+<button class="close" onclick="closeOverlay('transferOverlay')">✕</button><h2>Thanh toán chuyển khoản</h2>
+<div id="qrBox" class="card"></div><button class="btn primary" onclick="confirmTransfer()">✓ XÁC NHẬN ĐÃ NHẬN TIỀN</button>
+</div></div>
+
+<div id="debtNameOverlay" class="overlay"><div class="sheet">
+<button class="close" onclick="closeOverlay('debtNameOverlay')">✕</button><h2>Khách hàng ghi nợ</h2>
+<div class="field"><label>Tên khách hàng</label><input id="debtName" class="input" placeholder="Nhập tên khách hàng"></div>
+<button class="btn amber" onclick="confirmDebt()">LƯU GHI NỢ</button>
+</div></div>
+
+<div id="invoiceOverlay" class="overlay"><div class="sheet">
+<button class="close" onclick="closeOverlay('invoiceOverlay')">✕</button><h2>Xem lại hóa đơn</h2>
+<div class="toolbar"><select id="invoiceLang" class="select" onchange="renderInvoice()"><option value="vi">Tiếng Việt</option><option value="en">English</option></select><button class="btn" onclick="printInvoice()">📄 PDF / In</button></div>
+<div id="invoiceView"></div>
+</div></div>
+
+<div id="debtOverlay" class="overlay"><div class="sheet">
+<button class="close" onclick="closeOverlay('debtOverlay')">✕</button><h2>Công nợ khách hàng</h2><div id="debtView"></div>
+</div></div>
+
+<script>
+'use strict';
+const KEY='taximet_pro_v5';
+const defaultState={
+ settings:{driver:'',plate:'',waitEnabled:true,waitSpeed:5,waitFree:5,waitRate:1000,drFactor:1,drMax:80,googleKey:'',bank:'',account:'',holder:''},
+ tariffs:[{id:'t1',name:'Tiêu chuẩn',base:12000,perKm:13000,wait:1000}],
+ selectedTariff:'t1',trips:[],active:null,adjust:{direct:0,pct:0,surcharge:0,toll:0}
+};
+let S=load(), watchId=null, wake=null, tick=null, lastPos=null, currentInvoice=null, finishing=false;
+
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY));return x?merge(defaultState,x):structuredClone(defaultState)}catch(e){return structuredClone(defaultState)}}
+function merge(a,b){return {...a,...b,settings:{...a.settings,...(b.settings||{})},tariffs:b.tariffs?.length?b.tariffs:a.tariffs,trips:b.trips||[],active:b.active||null,adjust:{...a.adjust,...(b.adjust||{})}}}
+function save(){localStorage.setItem(KEY,JSON.stringify(S))}
+const $=id=>document.getElementById(id);
+function money(n){return Math.max(0,Math.round(n||0)).toLocaleString('vi-VN')+' đ'}
+function kmFmt(n){return (n||0).toFixed(2)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function fmtTime(sec){sec=Math.max(0,Math.floor(sec||0));return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0')}
+function dist(a,b){const R=6371000,p=Math.PI/180,dLat=(b.lat-a.lat)*p,dLon=(b.lon-a.lon)*p;const x=Math.sin(dLat/2)**2+Math.cos(a.lat*p)*Math.cos(b.lat*p)*Math.sin(dLon/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))}
+function point(pos){return {lat:Number(pos.coords.latitude),lon:Number(pos.coords.longitude),acc:Number(pos.coords.accuracy)||999,speed:Number(pos.coords.speed)||0,ts:Number(pos.timestamp)||Date.now()}}
+function good(p){return Number.isFinite(p.lat)&&Number.isFinite(p.lon)&&p.acc<=100&&Math.abs(p.lat)<=90&&Math.abs(p.lon)<=180}
+function tariff(){return S.tariffs.find(t=>t.id===S.selectedTariff)||S.tariffs[0]}
+function adjDelta(base){const a=S.adjust;return -(Number(a.direct)||0)-base*(Number(a.pct)||0)/100+(Number(a.surcharge)||0)+(Number(a.toll)||0)}
+function waitFee(trip){if(!S.settings.waitEnabled)return 0;const mins=Math.max(0,Math.floor((trip.waitSec||0)/60)-Number(S.settings.waitFree||0));return mins*Number(S.settings.waitRate||0)}
+function fareTotal(trip){const t=S.tariffs.find(x=>x.id===trip.tariffId)||tariff();const base=Number(t.base)||0;const kmPart=Math.max(0,trip.km)*Number(t.perKm||0);const w=waitFee(trip);const adj=trip.adjustDelta||0;return Math.max(0,Math.round(base+kmPart+w+adj))}
+function tripDuration(t){if(!t)return 0;return t.durationSec||Math.max(0,((t.endTs||Date.now())-t.startTs)/1000-(t.pauseSec||0))}
+function setGPS(ok,text){$('gpsPill').className='gps '+(ok?'ok':'');$('gpsPill').textContent=ok?'● GPS tốt':('● '+(text||'GPS chưa sẵn sàng'))}
+function persistActive(){save()}
+function renderTariffs(){const sel=$('tariffSel');sel.innerHTML=S.tariffs.map(t=>`<option value="${esc(t.id)}">${esc(t.name)} • ${money(t.perKm)}/km</option>`).join('');sel.value=S.selectedTariff}
+function renderHome(){renderTariffs();const t=S.active;const f=t?fareTotal(t):0;$('fare').textContent=money(f);$('km').textContent=kmFmt(t?.km||0);$('speed').textContent=Math.round((t?.speed||0)*3.6);$('time').textContent=fmtTime(tripDuration(t));$('pickup').textContent=t?.pickup?.address||coordText(t?.pickup);$('dropoff').textContent=t?.dropoff?.address||coordText(t?.dropoff);if(t?.adjustDelta)document.querySelector('#page-meter .row button').textContent=(t.adjustDelta>=0?'+':'')+money(t.adjustDelta);
+if(!t){$('state').textContent='Sẵn sàng bắt đầu chuyến';$('actions').className='actions single';$('actions').innerHTML='<button class="btn primary" onclick="startTrip()">▶ BẮT ĐẦU CHUYẾN</button>'}
+else if(t.status==='running'){$('state').textContent='● Đang chạy';$('state').style.color='var(--green)';$('actions').className='actions';$('actions').innerHTML='<button class="btn" onclick="pauseTrip()">Ⅱ TẠM DỪNG</button><button class="btn danger" onclick="finishTrip()">✓ HOÀN THÀNH</button>'}
+else{$('state').textContent='Ⅱ Đang tạm dừng';$('state').style.color='var(--amber)';$('actions').className='actions';$('actions').innerHTML='<button class="btn primary" onclick="resumeTrip()">▶ TIẾP TỤC</button><button class="btn danger" onclick="finishTrip()">✓ HOÀN THÀNH</button>'}}
+function coordText(p){return p?`${p.lat.toFixed(6)}, ${p.lon.toFixed(6)}`:'Chưa xác định'}
+function go(page){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$('page-'+page).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page));if(page==='history')renderHistory();if(page==='revenue')renderRevenue();if(page==='settings')renderSettings()}
+$('tariffSel').onchange=()=>{S.selectedTariff=$('tariffSel').value;save();renderHome()}
+function startTrip(){if(S.active)return;S.active={id:'TRIP-'+Date.now(),status:'running',startTs:Date.now(),pauseSec:0,km:0,speed:0,tariffId:S.selectedTariff,pickup:null,dropoff:null,waitSec:0,adjustDelta:0,lastGood:null,gap:null,gapLedger:[],trail:[]};S.adjust={direct:0,pct:0,surcharge:0,toll:0};save();startGPS(true);requestWake();renderHome()}
+function pauseTrip(){if(!S.active)return;resolveGap(false);S.active.status='paused';S.active.pauseStarted=Date.now();save();stopGPS();releaseWake();renderHome()}
+function resumeTrip(){if(!S.active)return;S.active.pauseSec+=(S.active.pauseStarted?Date.now()-S.active.pauseStarted:0);delete S.active.pauseStarted;S.active.status='running';S.active.gap=null;save();startGPS(true);requestWake();renderHome()}
+async function finishTrip(){if(!S.active||finishing)return;finishing=true;try{if(S.active.status==='running'){await finalGPS();resolveGap(true)}S.active.dropoff=S.active.lastGood||S.active.dropoff;S.active.durationSec=Math.max(0,Math.round((Date.now()-S.active.startTs-(S.active.pauseSec||0)-(S.active.pauseStarted?Date.now()-S.active.pauseStarted:0))/1000));$('finishSummary').innerHTML=`<div class="card"><b style="font-size:30px">${money(fareTotal(S.active))}</b><div class="mini">${kmFmt(S.active.km)} km • ${fmtTime(S.active.durationSec)}</div></div>`;$('finishOverlay').classList.add('show')}catch(e){console.error(e)}finally{finishing=false}}
+function finalGPS(){return new Promise(resolve=>{if(!navigator.geolocation)return resolve();let done=false;const id=navigator.geolocation.getCurrentPosition(p=>{if(!done){done=true;clearTimeout(tm);onGPS(p);resolve()}},()=>{if(!done){done=true;clearTimeout(tm);resolve()}},{enableHighAccuracy:true,maximumAge:0,timeout:3500});const tm=setTimeout(()=>{if(!done){done=true;try{navigator.geolocation.clearWatch(id)}catch{};resolve()}},4000)})}
+function startGPS(force){if(!navigator.geolocation){setGPS(false,'GPS không hỗ trợ');return}if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=navigator.geolocation.watchPosition(onGPS,onGPSErr,{enableHighAccuracy:true,maximumAge:1000,timeout:10000});if(force)navigator.geolocation.getCurrentPosition(onGPS,onGPSErr,{enableHighAccuracy:true,maximumAge:0,timeout:8000})}
+function stopGPS(){if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null}}
+function onGPSErr(e){setGPS(false,e?.code===1?'GPS bị từ chối':'GPS đang mất tín hiệu');if(S.active){S.active.gap=S.active.gap||{id:'G'+Date.now(),startTs:Date.now(),from:S.active.lastGood||null};save()}}
+function onGPS(pos){if(!S.active)return;const p=point(pos);if(!good(p)){setGPS(false,'GPS không chính xác');return}setGPS(true);const t=S.active;
+if(!t.pickup)t.pickup=p;
+if(t.status!=='running'){t.lastGood=p;save();renderHome();return}
+if(t.lastGood){const d=dist(t.lastGood,p);const dt=Math.max(.2,(p.ts-t.lastGood.ts)/1000);const v=d/dt;const max=Math.max(25,(S.settings.drMax||80)/3.6);if(d>=5&&d<Math.min(1000,v<max?d:0+1000)&&v<max){t.km+=d/1000;t.speed=p.speed>0?p.speed:v;t.trail.push(p)}else if(d>=5){t.gap=t.gap||{id:'G'+Date.now(),startTs:t.lastGood.ts,from:t.lastGood};t.gap.to=p}}
+else t.lastGood=p;
+if(t.gap&&t.gap.to===p)t.gap.to=p;
+t.lastGood=p;
+if(t.speed<0)t.speed=0;
+if((p.speed||0)*3.6<Number(S.settings.waitSpeed||5))t.waitSec=(t.waitSec||0)+Math.min(5,Math.max(1,(p.ts-(t._lastTick||p.ts))/1000));t._lastTick=p.ts;
+save();renderHome()}
+function resolveGap(finalize){const t=S.active;if(!t?.gap)return;const g=t.gap;if(g.committed)return;let add=0;if(g.from&&g.to){const direct=dist(g.from,g.to)/1000;const elapsed=Math.max(0,(g.to.ts-g.from.ts)/1000);const v=(g.from.speed||0);const dr=Math.min(Number(S.settings.drMax||80),Math.max(0,v*3.6))*elapsed/3600;const w=Math.min(1,Math.max(.05,Number(S.settings.drFactor||1)/2));add=Math.min(direct*1.05,Math.max(direct*w,dr*w));if(add>0&&add<50)t.km+=add}g.committed=true;t.gap=null}
+async function geocode(p){const key=S.settings.googleKey;if(!key||!p)return null;try{const r=await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${p.lat},${p.lon}&key=${encodeURIComponent(key)}`);const j=await r.json();return j.results?.[0]?.formatted_address||null}catch{return null}}
+function requestWake(){try{navigator.wakeLock?.request('screen').then(x=>wake=x).catch(()=>{})}catch{}}
+function releaseWake(){try{wake?.release()}catch{}wake=null}
+document.addEventListener('visibilitychange',()=>{if(document.hidden){persistActive();return}if(S.active?.status==='running'){startGPS(true);requestWake()}});
+window.addEventListener('pagehide',persistActive);
+function openAdjust(){const a=S.adjust;['direct','pct','surcharge','toll'].forEach(k=>$('adj'+k[0].toUpperCase()+k.slice(1)).value=a[k]||'');updateDelta();$('adjustOverlay').classList.add('show')}
+function updateDelta(){const base=fareTotal(S.active||{km:0,waitSec:0,tariffId:S.selectedTariff,adjustDelta:0});const d=adjDelta(base);$('delta').textContent='Thay đổi: '+(d>=0?'+':'')+money(d)}
+function confirmAdjust(){S.adjust={direct:Number($('adjDirect').value)||0,pct:Number($('adjPct').value)||0,surcharge:Number($('adjSurcharge').value)||0,toll:Number($('adjToll').value)||0};if(S.active){const t=S.active;const base=fareTotal({...t,adjustDelta:0});t.adjustDelta=adjDelta(base)}save();closeOverlay('adjustOverlay');renderHome()}
+function closeOverlay(id){$(id).classList.remove('show')}
+function payCash(){completeTrip('cash','paid')}
+function payTransfer(){const t=S.active;const amount=fareTotal(t);const s=S.settings;const qr=s.bank&&s.account?`<div style="text-align:center"><b>${money(amount)}</b><div class="mini">Ngân hàng: ${esc(s.bank)} • STK: ${esc(s.account)}</div><div class="mini">Nội dung: ${esc(t.id)}</div><div style="font-size:50px;margin:18px">▦</div><small>VietQR: cấu hình ngân hàng/ tài khoản để tạo QR thực tế.</small></div>`:`<div class="dangerText">Chưa cấu hình ngân hàng và số tài khoản trong Cài đặt.</div>`;$('qrBox').innerHTML=qr;$('finishOverlay').classList.remove('show');$('transferOverlay').classList.add('show')}
+function confirmTransfer(){completeTrip('transfer','paid')}
+function payDebt(){$('finishOverlay').classList.remove('show');$('debtName').value='';$('debtNameOverlay').classList.add('show')}
+function confirmDebt(){const name=$('debtName').value.trim();if(!name)return alert('Vui lòng nhập tên khách hàng.');S.active.customer=name;completeTrip('debt','debt')}
+async function completeTrip(method,status){const t=S.active;if(!t)return;try{t.paymentMethod=method;t.paymentStatus=status;t.endTs=Date.now();t.durationSec=t.durationSec||Math.round((t.endTs-t.startTs-(t.pauseSec||0))/1000);t.amount=fareTotal(t);if(t.pickup)t.pickup.address=await geocode(t.pickup);if(t.dropoff)t.dropoff.address=await geocode(t.dropoff);S.trips.unshift({...t});S.active=null;S.adjust={direct:0,pct:0,surcharge:0,toll:0};save();['finishOverlay','transferOverlay','debtNameOverlay'].forEach(closeOverlay);stopGPS();releaseWake();renderHome()}catch(e){console.error(e)}}
+function renderHistory(){const f=$('historyFilter').value;const arr=S.trips.filter(t=>f==='all'||(f==='paid'&&t.paymentStatus==='paid')||(f==='debt'&&t.paymentStatus==='debt'));$('historyList').innerHTML=arr.length?arr.map(t=>`<div class="item"><div class="itemTop"><b>${esc(t.id)}</b><span class="badge ${t.paymentStatus}">${t.paymentStatus==='debt'?'GHI NỢ':'ĐÃ THU'}</span></div><div class="mini">${new Date(t.endTs).toLocaleString('vi-VN')} • ${kmFmt(t.km)} km • ${money(t.amount)}</div><div class="mini">${esc(t.customer||'')} ${t.paymentMethod?'• '+esc(t.paymentMethod):''}</div><div class="row" style="margin-top:8px"><button class="btn" onclick="viewInvoice('${t.id}')">Hóa đơn</button>${t.paymentStatus==='debt'?'<button class="btn amber" onclick="openDebt()">Công nợ</button>':''}</div></div>`).join(''):'<div class="empty">Chưa có chuyến hoàn thành.</div>'}
+function renderRevenue(){const f=$('revFilter').value,now=Date.now();let arr=S.trips;if(f==='today')arr=arr.filter(t=>new Date(t.endTs).toDateString()===new Date().toDateString());if(f==='7')arr=arr.filter(t=>now-t.endTs<=7*86400000);if(f==='month'){const m=new Date();arr=arr.filter(t=>{const d=new Date(t.endTs);return d.getMonth()===m.getMonth()&&d.getFullYear()===m.getFullYear()})}const paid=arr.filter(t=>t.paymentStatus==='paid'),cash=paid.filter(t=>t.paymentMethod==='cash').reduce((a,t)=>a+t.amount,0),transfer=paid.filter(t=>t.paymentMethod==='transfer').reduce((a,t)=>a+t.amount,0),debt=arr.filter(t=>t.paymentStatus==='debt').reduce((a,t)=>a+t.amount,0),total=cash+transfer;$('revenueBox').innerHTML=`<div class="metrics"><div class="metric"><div class="label">Tổng đã thu</div><b>${money(total)}</b></div><div class="metric"><div class="label">Tổng chuyến</div><b>${arr.length}</b></div><div class="metric"><div class="label">Trung bình/đã thu</div><b>${money(paid.length?total/paid.length:0)}</b></div></div><div class="card"><div class="sectionTitle">Doanh thu</div><div class="itemTop"><span>💵 Tiền mặt</span><b>${money(cash)}</b></div><div class="itemTop"><span>🏦 Chuyển khoản</span><b>${money(transfer)}</b></div><div class="itemTop"><span>▧ Công nợ</span><b>${money(debt)}</b></div></div>`}
+function renderSettings(){const s=S.settings;['driver','plate','waitSpeed','waitFree','waitRate','drFactor','drMax','googleKey','bank','account','holder'].forEach(k=>$(k).value=s[k]??'');$('waitEnabled').value=s.waitEnabled?'1':'0';$('tariffEditor').innerHTML=S.tariffs.map((t,i)=>`<div class="item" style="margin-bottom:8px"><div class="grid2"><input class="input" value="${esc(t.name)}" onchange="editTariff(${i},'name',this.value)"><input class="input" type="number" value="${t.perKm}" onchange="editTariff(${i},'perKm',this.value)" placeholder="đ/km"><input class="input" type="number" value="${t.base}" onchange="editTariff(${i},'base',this.value)" placeholder="giá cơ bản"><input class="input" type="number" value="${t.wait||0}" onchange="editTariff(${i},'wait',this.value)" placeholder="phí chờ/phút"></div><button class="btn danger" style="margin-top:7px" onclick="removeTariff(${i})">Xóa biểu cước</button></div>`).join('')}
+function editTariff(i,k,v){S.tariffs[i][k]=k==='name'?v:Number(v);save();renderTariffs()}
+function addTariff(){S.tariffs.push({id:'t'+Date.now(),name:'Biểu cước mới',base:12000,perKm:13000,wait:1000});save();renderSettings();renderTariffs()}
+function removeTariff(i){if(S.tariffs.length<=1)return alert('Phải giữ ít nhất một biểu cước.');const id=S.tariffs[i].id;S.tariffs.splice(i,1);if(S.selectedTariff===id)S.selectedTariff=S.tariffs[0].id;save();renderSettings();renderTariffs()}
+function saveSettings(){const s=S.settings;['driver','plate','waitSpeed','waitFree','waitRate','drFactor','drMax','googleKey','bank','account','holder'].forEach(k=>s[k]=['driver','plate','googleKey','bank','account','holder'].includes(k)?$(k).value.trim():Number($(k).value)||0);s.waitEnabled=$('waitEnabled').value==='1';save();alert('Đã lưu cài đặt.');renderHome()}
+function openDebt(){renderDebt();$('debtOverlay').classList.add('show')}
+function renderDebt(){const groups={};S.trips.filter(t=>t.paymentStatus==='debt').forEach(t=>(groups[t.customer||'Không tên']??=[]).push(t));const names=Object.keys(groups);$('debtView').innerHTML=names.length?names.map(name=>{const arr=groups[name],sum=arr.reduce((a,t)=>a+t.amount,0);return `<div class="item"><div class="itemTop"><b>${esc(name)}</b><b class="dangerText">${money(sum)}</b></div><div class="mini">${arr.length} chuyến nợ</div><table class="table"><tbody>${arr.map(t=>`<tr><td>${new Date(t.endTs).toLocaleDateString('vi-VN')}</td><td>${money(t.amount)}</td><td><button class="btn" onclick="viewInvoice('${t.id}')">Xem</button></td></tr>`).join('')}</tbody></table><div class="grid2" style="margin-top:8px"><button class="btn primary" onclick="settleCustomer('${esc(name)}','cash')">Tất toán tiền mặt</button><button class="btn blue" onclick="settleCustomer('${esc(name)}','transfer')">Tất toán chuyển khoản</button></div></div>`}).join(''):'<div class="empty">Không có khách hàng đang nợ.</div>'}
+function settleCustomer(name,method){const arr=S.trips.filter(t=>t.paymentStatus==='debt'&&t.customer===name);if(!arr.length)return;if(method==='cash'){arr.forEach(t=>{t.paymentStatus='paid';t.paymentMethod='cash';t.settledAt=Date.now()});save();renderDebt();renderHistory();renderRevenue();return}currentInvoice={settlement:{name,arr,amount:arr.reduce((a,t)=>a+t.amount,0)}};$('qrBox').innerHTML=`<div style="text-align:center"><b>${esc(name)}</b><div style="font-size:28px;margin:12px 0">${money(currentInvoice.settlement.amount)}</div><div class="mini">QR thanh toán công nợ • nội dung: CONGNO-${Date.now()}</div><div style="font-size:50px;margin:18px">▦</div></div>`;$('debtOverlay').classList.remove('show');$('transferOverlay').classList.add('show');window.__settleTransfer=true}
+const oldConfirmTransfer=confirmTransfer;confirmTransfer=function(){if(window.__settleTransfer){const x=currentInvoice.settlement;x.arr.forEach(t=>{t.paymentStatus='paid';t.paymentMethod='transfer';t.settledAt=Date.now()});window.__settleTransfer=false;currentInvoice=null;save();closeOverlay('transferOverlay');renderDebt();renderHistory();renderRevenue();return}oldConfirmTransfer()}
+function viewInvoice(id){const t=S.trips.find(x=>x.id===id);if(!t)return;currentInvoice=t;$('invoiceLang').value=t.invoiceLang||'vi';renderInvoice();$('invoiceOverlay').classList.add('show')}
+function renderInvoice(){const t=currentInvoice;if(!t||t.settlement)return;const en=$('invoiceLang').value==='en';t.invoiceLang=en?'en':'vi';save();const L=en?{title:'TAXIMET PRO INVOICE',paid:'PAID',debt:'UNPAID',date:'Date',driver:'Driver',plate:'Plate',customer:'Customer',pay:'Payment',pickup:'Pickup',drop:'Drop-off',tariff:'Tariff',gps:'GPS distance',comp:'GPS compensation',km:'Total distance',duration:'Duration',wait:'Waiting fee',adj:'Adjustment',total:'TOTAL',thanks:'Thank you'}:{title:'HÓA ĐƠN TAXIMET PRO',paid:'ĐÃ THANH TOÁN',debt:'GHI NỢ',date:'Ngày giờ',driver:'Tài xế',plate:'Biển số',customer:'Khách hàng',pay:'Thanh toán',pickup:'Điểm đón',drop:'Điểm trả',tariff:'Biểu cước',gps:'Khoảng cách GPS',comp:'Bù GPS',km:'Tổng quãng đường',duration:'Thời gian',wait:'Phí chờ',adj:'Điều chỉnh',total:'TỔNG THANH TOÁN',thanks:'Cảm ơn quý khách'};const tarr=S.tariffs.find(x=>x.id===t.tariffId)||{};const comp=t.gapLedger?.reduce((a,x)=>a+(x.km||0),0)||0;$('invoiceView').innerHTML=`<div class="invoice"><div style="display:flex;justify-content:space-between"><h1>${L.title}</h1><b>${t.paymentStatus==='debt'?L.debt:L.paid}</b></div><small>${esc(t.id)}</small><hr><div class="irow"><span>${L.date}</span><b>${new Date(t.endTs).toLocaleString(en?'en-GB':'vi-VN')}</b></div><div class="irow"><span>${L.driver}</span><b>${esc(S.settings.driver)}</b></div><div class="irow"><span>${L.plate}</span><b>${esc(S.settings.plate)}</b></div><div class="irow"><span>${L.customer}</span><b>${esc(t.customer||'—')}</b></div><div class="irow"><span>${L.pay}</span><b>${esc(t.paymentMethod||'—')}</b></div><div class="irow"><span>${L.pickup}</span><b>${esc(t.pickup?.address||coordText(t.pickup))}</b></div><div class="irow"><span>${L.drop}</span><b>${esc(t.dropoff?.address||coordText(t.dropoff))}</b></div><div class="irow"><span>${L.tariff}</span><b>${esc(tarr.name||'')}</b></div><div class="irow"><span>${L.gps}</span><b>${kmFmt(Math.max(0,t.km-comp))} km</b></div><div class="irow"><span>${L.comp}</span><b>${kmFmt(comp)} km</b></div><div class="irow"><span>${L.km}</span><b>${kmFmt(t.km)} km</b></div><div class="irow"><span>${L.duration}</span><b>${fmtTime(t.durationSec)}</b></div><div class="irow"><span>${L.wait}</span><b>${money(waitFee(t))}</b></div><div class="irow"><span>${L.adj}</span><b>${money(t.adjustDelta||0)}</b></div><div class="total">${L.total}: ${money(t.amount)}</div>${t.paymentStatus==='debt'?'<div style="text-align:center;margin-top:15px">▦<br><small>QR thanh toán công nợ</small></div>':''}<div style="text-align:center;margin-top:15px"><small>${L.thanks}</small></div></div>`}
+function printInvoice(){const x=$('invoiceView').innerHTML,w=window.open('','_blank');if(!w)return alert('Trình duyệt chặn cửa sổ in.');w.document.write(`<html><head><title>TAXIMET PRO</title><style>body{font-family:Arial;margin:20mm}.invoice{max-width:700px;margin:auto} .irow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #ddd}.total{text-align:right;font-size:24px;font-weight:bold;margin-top:12px}</style></head><body>${x}</body></html>`);w.document.close();setTimeout(()=>w.print(),250)}
+function boot(){renderTariffs();renderHome();renderHistory();renderRevenue();if(S.active){startGPS(false);if(S.active.status==='running')requestWake()}tick=setInterval(()=>{if(S.active){renderHome();persistActive()}},1000)}
+boot();
+</script>
+</body>
+</html>
